@@ -24,46 +24,62 @@ export async function GET(req: NextRequest) {
 
   const accessToken = token?.accessToken || (await getAppAccessToken());
 
-  if (seedGenres) {
-    try {
-      const res = await fetch(
-        `https://api.spotify.com/v1/recommendations?seed_genres=${seedGenres.join(',')}&limit=8`,
+  if (!seedGenres) {
+    // Onbekende mood → meteen fallback YouTube
+    return NextResponse.json({
+      mood,
+      source: 'youtube',
+      recommendations: [
         {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
-
-      if (!res.ok) throw new Error('Spotify API fout');
-
-      const data = await res.json();
-
-      const tracks = data.tracks.map((track: any) => ({
-        title: track.name,
-        artist: track.artists.map((a: any) => a.name).join(', '),
-        url: track.external_urls.spotify,
-      }));
-
-      return NextResponse.json({
-        mood,
-        source: token?.accessToken ? 'spotify-user' : 'spotify-app',
-        tracks,
-      });
-    } catch (err) {
-      console.error('Fout bij ophalen Spotify tracks:', err);
-    }
+          title: `Zoekresultaten voor "${mood}" op YouTube`,
+          youtube: `https://www.youtube.com/results?search_query=${encodeURIComponent(
+            mood + ' muziek'
+          )}`,
+        },
+      ],
+    });
   }
 
-  // Fallback: YouTube link
-  return NextResponse.json({
-    mood,
-    source: 'youtube',
-    recommendations: [
+  try {
+    const res = await fetch(
+      `https://api.spotify.com/v1/recommendations?seed_genres=${seedGenres.join(',')}&limit=8`,
       {
-        title: `Zoekresultaten voor "${mood}" op YouTube`,
-        youtube: `https://www.youtube.com/results?search_query=${encodeURIComponent(mood + ' muziek')}`,
-      },
-    ],
-  });
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    if (!res.ok) throw new Error(`Spotify API fout: ${res.statusText}`);
+
+    const data = await res.json();
+
+    const tracks = data.tracks.map((track: any) => ({
+      title: track.name,
+      artist: track.artists.map((a: any) => a.name).join(', '),
+      url: track.external_urls.spotify,
+    }));
+
+    return NextResponse.json({
+      mood,
+      source: token?.accessToken ? 'spotify-user' : 'spotify-app',
+      tracks,
+    });
+  } catch (err) {
+    console.error('Fout bij ophalen Spotify tracks:', err);
+
+    // Fallback response zodat frontend niet crasht
+    return NextResponse.json({
+      mood,
+      source: 'youtube-fallback',
+      recommendations: [
+        {
+          title: `Zoekresultaten voor "${mood}" op YouTube`,
+          youtube: `https://www.youtube.com/results?search_query=${encodeURIComponent(
+            mood + ' muziek'
+          )}`,
+        },
+      ],
+    });
+  }
 }
