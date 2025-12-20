@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { translations } from '@/lib/translations'; 
+import { translations } from '@/lib/translations';
+import MoodGrid from '@/app/components/MoodGrid'; // ✅ import toevoegen
 
 const genres = ['Pop', 'Rock', 'Salsa', 'Bachata', 'Jazz', 'Hip-Hop'];
 const moods = ['Vrolijk', 'Verdrietig', 'Energiek', 'Romantisch', 'Rustig'];
@@ -10,6 +11,7 @@ export default function HomePage() {
   const [lang, setLang] = useState<keyof typeof translations>('en');
   const [selectedGenre, setSelectedGenre] = useState('');
   const [selectedMood, setSelectedMood] = useState('');
+  const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
     setLang(getUserLang());
@@ -18,19 +20,13 @@ export default function HomePage() {
   const t = translations[lang];
 
   return (
-    <main
-      className="min-h-screen bg-gradient-to-br from-purple-500 via-pink-500 to-red-500 flex items-center justify-center text-white"
-    >
+    <main className="min-h-screen bg-gradient-to-br from-purple-500 via-pink-500 to-red-500 flex items-center justify-center text-white">
       <div className="bg-white/10 p-8 rounded-lg shadow-lg backdrop-blur-md max-w-md w-full">
-        <h1 className="text-2xl font-bold mb-6 text-center">
-          {t.welcome}
-        </h1>
+        <h1 className="text-2xl font-bold mb-6 text-center">{t.welcome}</h1>
 
         {/* Genre Combo Box */}
         <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">
-            Music genre {/* <-- hier kun je ook t.genre toevoegen als je dat wilt vertalen */}
-          </label>
+          <label className="block text-sm font-medium mb-1">Music genre</label>
           <select
             value={selectedGenre}
             onChange={(e) => setSelectedGenre(e.target.value)}
@@ -45,9 +41,7 @@ export default function HomePage() {
 
         {/* Mood Combo Box */}
         <div className="mb-6">
-          <label className="block text-sm font-medium mb-1">
-            {t.mood}
-          </label>
+          <label className="block text-sm font-medium mb-1">{t.mood}</label>
           <select
             value={selectedMood}
             onChange={(e) => setSelectedMood(e.target.value)}
@@ -64,18 +58,28 @@ export default function HomePage() {
         <button
           className="w-full bg-green-500 hover:bg-green-600 text-white py-2 rounded font-semibold"
           onClick={() => {
-            if (!selectedGenre || !selectedMood) return alert('Selecteer beide velden');
-            console.log(`Zoek: Genre=${selectedGenre}, Mood=${selectedMood}`);
+            if (!selectedGenre || !selectedMood) {
+              alert('Selecteer beide velden');
+              return;
+            }
+            setSubmitted(true);
           }}
         >
           {lang === 'nl' ? 'Zoek muziek' : 'Find music'}
         </button>
       </div>
+
+      {/* Render resultaten */}
+      {submitted && (
+        <div className="mt-8 w-full max-w-3xl">
+          <MoodGrid mood={selectedMood.toLowerCase()} />
+        </div>
+      )}
     </main>
   );
 }
 
-// Bovenaan in dezelfde file of apart importeren
+// Helper functie
 const getUserLang = (): keyof typeof translations => {
   if (typeof navigator === 'undefined') return 'en';
   const lang = navigator.language.slice(0, 2);
@@ -83,4 +87,3 @@ const getUserLang = (): keyof typeof translations => {
     ? (lang as keyof typeof translations)
     : 'en';
 };
-

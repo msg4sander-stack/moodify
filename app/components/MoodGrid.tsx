@@ -13,7 +13,7 @@ type Recommendation = {
   youtube: string
 }
 
-export default function MoodGrid() {
+export default function MoodGrid({ mood }: { mood: string }) {
   const [tracks, setTracks] = useState<Track[]>([])
   const [recommendations, setRecommendations] = useState<Recommendation[]>([])
   const [selectedMood, setSelectedMood] = useState('')
