@@ -49,7 +49,7 @@ const moodAudioTargets: Record<
 > = {
   blij: { targetValence: 0.9, targetEnergy: 0.8, minDanceability: 0.7 },
   energiek: { targetValence: 0.75, targetEnergy: 0.9, minDanceability: 0.7 },
-  relaxed: { targetValence: 0.6, targetEnergy: 0.35, minDanceability: 0.3, maxEnergy: 0.45 },
+  relaxed: { targetValence: 0.6, targetEnergy: 0.35, maxEnergy: 0.45, minDanceability: 0.3 },
   verdrietig: { targetValence: 0.2, targetEnergy: 0.2 },
   romantisch: { targetValence: 0.65, targetEnergy: 0.5, minDanceability: 0.4 },
   boos: { targetValence: 0.3, targetEnergy: 0.85, minDanceability: 0.5 },
