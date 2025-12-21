@@ -102,8 +102,7 @@ export default function MoodGrid({ mood }: { mood: string }) {
         </div>
       )}
 
-      {/* Geen resultaat */}
-      {tracks.length === 0 && recommendations.length === 0 && selectedMood && (
+      {/* Geen resultaat */}      {tracks.length === 0 && recommendations.length === 0 && selectedMood && (
         <p className="text-zinc-400">Geen muziek gevonden voor deze stemming.</p>
       )}
     </div>

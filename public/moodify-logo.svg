@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Moodify logo">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34f5c5"/>
+      <stop offset="50%" stop-color="#f542c5"/>
+      <stop offset="100%" stop-color="#7a5bf7"/>
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="256" height="256" fill="#0c0c12"/>
+  <g filter="url(#glow)" stroke="url(#g)" stroke-width="12" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="128" cy="128" r="92"/>
+    <path d="M76 152c0-26 9-46 22-46s22 20 22 46 9 46 22 46 22-20 22-46"/>
+    <circle cx="76" cy="152" r="6" fill="url(#g)" stroke="none"/>
+    <circle cx="180" cy="152" r="6" fill="url(#g)" stroke="none"/>
+  </g>
+</svg>
