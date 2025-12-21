@@ -58,6 +58,34 @@ const moodAudioTargets: Record<
   gestrest: { targetValence: 0.4, targetEnergy: 0.25, minDanceability: 0.2 },
 }
 
+function buildYoutubeFallback(mood: string, seed: string) {
+  const targets = moodAudioTargets[mood] || {}
+  const paramTokens: string[] = []
+
+  if (typeof targets.targetValence === 'number') paramTokens.push(`target_valence=${targets.targetValence}`)
+  if (typeof targets.targetEnergy === 'number') paramTokens.push(`target_energy=${targets.targetEnergy}`)
+  if (typeof targets.minValence === 'number') paramTokens.push(`min_valence=${targets.minValence}`)
+  if (typeof targets.maxValence === 'number') paramTokens.push(`max_valence=${targets.maxValence}`)
+  if (typeof targets.minEnergy === 'number') paramTokens.push(`min_energy=${targets.minEnergy}`)
+  if (typeof targets.maxEnergy === 'number') paramTokens.push(`max_energy=${targets.maxEnergy}`)
+  if (typeof targets.minDanceability === 'number') paramTokens.push(`min_danceability=${targets.minDanceability}`)
+
+  const searchTokens = [seed || mood, ...paramTokens]
+  const query = encodeURIComponent(searchTokens.join(' '))
+
+  return {
+    mood,
+    source: 'youtube-fallback',
+    tracks: [],
+    recommendations: [
+      {
+        title: `Zoekresultaten voor "${seed || mood}" op YouTube`,
+        youtube: `https://www.youtube.com/results?search_query=${query}`,
+      },
+    ],
+  }
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const mood = searchParams.get('mood')?.toLowerCase() || 'blij';
@@ -73,12 +101,7 @@ export async function GET(req: NextRequest) {
   const accessToken = token?.accessToken || (await getAppAccessToken());
 
   if (!seedGenres) {
-    return NextResponse.json({
-      mood,
-      source: 'none',
-      tracks: [],
-      recommendations: [],
-    });
+    return NextResponse.json(buildYoutubeFallback(mood, chosenSeed));
   }
 
   try {
@@ -133,11 +156,6 @@ export async function GET(req: NextRequest) {
   } catch (err) {
     console.error('Fout bij ophalen Spotify tracks:', err);
 
-    return NextResponse.json({
-      mood,
-      source: 'none',
-      tracks: [],
-      recommendations: [],
-    });
+    return NextResponse.json(buildYoutubeFallback(mood, chosenSeed));
   }
 }
