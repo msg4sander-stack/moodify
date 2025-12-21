@@ -15,6 +15,25 @@ const supportedGenres: Record<string, string[]> = {
   gestrest: ['ambient', 'study', 'sleep'],
 }
 
+// Toegestane seed genres voor handmatige selectie
+const allowedSeeds = new Set([
+  'acoustic', 'afrobeat', 'alt-rock', 'ambient', 'black-metal', 'bluegrass', 'blues',
+  'bossa-nova', 'classical', 'club', 'country', 'dance', 'dancehall', 'death-metal',
+  'deep-house', 'disco', 'drum-and-bass', 'dub', 'edm', 'electro', 'electronic', 'emo',
+  'folk', 'forro', 'french', 'funk', 'garage', 'german', 'gospel', 'goth', 'grindcore',
+  'groove', 'grunge', 'guitar', 'hard-rock', 'hardcore', 'hardstyle', 'heavy-metal',
+  'hip-hop', 'honky-tonk', 'house', 'idm', 'indian', 'indie', 'indie-pop', 'industrial',
+  'iranian', 'j-dance', 'j-idol', 'j-pop', 'j-rock', 'jazz', 'k-pop', 'kids', 'latin',
+  'latino', 'malay', 'mandopop', 'metal', 'metalcore', 'minimal-techno', 'movies',
+  'mpb', 'new-age', 'new-release', 'opera', 'pagode', 'party', 'philippines-opm',
+  'piano', 'pop', 'pop-film', 'post-dubstep', 'power-pop', 'progressive-house',
+  'psych-rock', 'punk', 'punk-rock', 'r-n-b', 'rainy-day', 'reggae', 'reggaeton',
+  'road-trip', 'rock', 'rock-n-roll', 'rockabilly', 'romance', 'sad', 'salsa', 'samba',
+  'sertanejo', 'show-tunes', 'singer-songwriter', 'ska', 'sleep', 'songwriter', 'soul',
+  'soundtracks', 'spanish', 'study', 'summer', 'swedish', 'synth-pop', 'tango',
+  'techno', 'trance', 'trip-hop', 'turkish', 'work-out', 'world-music',
+])
+
 // Audio feature targets per mood voor de Spotify recommendations API
 const moodAudioTargets: Record<
   string,
@@ -42,8 +61,10 @@ const moodAudioTargets: Record<
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const mood = searchParams.get('mood')?.toLowerCase() || 'blij';
+  const seedParam = searchParams.get('seed')?.toLowerCase() || '';
+  const chosenSeed = allowedSeeds.has(seedParam) ? seedParam : '';
 
-  const seedGenres = supportedGenres[mood];
+  const seedGenres = chosenSeed ? [chosenSeed] : supportedGenres[mood];
   const secret = process.env.NEXTAUTH_SECRET;
 
   // Probeer gebruikers-token via next-auth
@@ -52,18 +73,11 @@ export async function GET(req: NextRequest) {
   const accessToken = token?.accessToken || (await getAppAccessToken());
 
   if (!seedGenres) {
-    // Onbekende mood: meteen fallback naar YouTube
     return NextResponse.json({
       mood,
-      source: 'youtube',
-      recommendations: [
-        {
-          title: `Zoekresultaten voor "${mood}" op YouTube`,
-          youtube: `https://www.youtube.com/results?search_query=${encodeURIComponent(
-            mood + ' muziek'
-          )}`,
-        },
-      ],
+      source: 'none',
+      tracks: [],
+      recommendations: [],
     });
   }
 
@@ -106,6 +120,9 @@ export async function GET(req: NextRequest) {
       title: track.name,
       artist: track.artists.map((a: any) => a.name).join(', '),
       url: track.external_urls.spotify,
+      album: track.album?.name ?? '',
+      image: track.album?.images?.[0]?.url ?? '',
+      previewUrl: track.preview_url ?? '',
     }));
 
     return NextResponse.json({
@@ -116,18 +133,11 @@ export async function GET(req: NextRequest) {
   } catch (err) {
     console.error('Fout bij ophalen Spotify tracks:', err);
 
-    // Fallback response zodat frontend niet crasht
     return NextResponse.json({
       mood,
-      source: 'youtube-fallback',
-      recommendations: [
-        {
-          title: `Zoekresultaten voor "${mood}" op YouTube`,
-          youtube: `https://www.youtube.com/results?search_query=${encodeURIComponent(
-            mood + ' muziek'
-          )}`,
-        },
-      ],
+      source: 'none',
+      tracks: [],
+      recommendations: [],
     });
   }
 }

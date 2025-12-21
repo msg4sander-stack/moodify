@@ -118,7 +118,7 @@ export default function HomePage() {
 
         <section className="bg-white/5 border border-white/10 rounded-2xl p-6 shadow-2xl backdrop-blur">
           <div>
-            <label className="block text-sm font-semibold mb-2">Seed genre (optioneel)</label>
+            <label className="block text-sm font-semibold mb-2">Muziekgenre (optioneel)</label>
             <select
               value={selectedSeed}
               onChange={(e) => setSelectedSeed(e.target.value)}

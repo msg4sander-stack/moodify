@@ -6,6 +6,9 @@ type Track = {
   title: string
   artist: string
   url: string
+  album?: string
+  image?: string
+  previewUrl?: string
 }
 
 type Recommendation = {
@@ -64,26 +67,51 @@ export default function MoodGrid({ mood, seed }: { mood: string; seed?: string }
   return (
     <div className="space-y-6">
       {mood && (
-        <h2 className="text-xl font-semibold">
-          Aanbevolen bij stemming: {mood}
-        </h2>
+        <div className="space-y-1">
+          <h2 className="text-xl font-semibold">Aanbevolen bij stemming: {mood}</h2>
+          <p className="text-sm text-zinc-300">
+            Genre bron: {seed ? `handmatig gekozen (${seed})` : 'op basis van mood-mapping'}
+          </p>
+        </div>
       )}
 
       {/* Spotify tracks */}
       {tracks.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {tracks.map((track, index) => (
-            <div key={index} className="p-4 border rounded bg-zinc-900 text-white">
-              <p className="font-medium">{track.title}</p>
-              <p className="text-sm text-zinc-400">door {track.artist}</p>
+            <div key={index} className="p-4 border rounded bg-zinc-900 text-white flex gap-3">
+              {track.image && (
+                <img
+                  src={track.image}
+                  alt={track.title}
+                  className="w-16 h-16 rounded object-cover flex-shrink-0"
+                />
+              )}
+              <div className="flex-1">
+                <p className="font-medium">{track.title}</p>
+                <p className="text-sm text-zinc-400">door {track.artist}</p>
+                {track.album && (
+                  <p className="text-xs text-zinc-500 mt-1">Album: {track.album}</p>
+                )}
+              </div>
               <a
                 href={track.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-block mt-2 text-green-400 underline"
+                className="self-start text-green-400 underline text-sm"
               >
                 Open in Spotify
               </a>
+              {track.previewUrl && (
+                <a
+                  href={track.previewUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="self-start text-emerald-300 underline text-xs"
+                >
+                  Preview
+                </a>
+              )}
             </div>
           ))}
         </div>
