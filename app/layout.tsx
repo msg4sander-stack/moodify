@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { SessionProviderWrapper } from "./providers/SessionProviderWrapper"; // ✅ Nieuw
+import { SessionProviderWrapper } from "./providers/SessionProviderWrapper"; 
+import Link from "next/link";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,6 +31,12 @@ export default function RootLayout({
           {children}
         </SessionProviderWrapper>
       </body>
-    </html>
+      <footer className="text-sm text-gray-400 text-center py-6">
+      <p>
+        <Link href="/privacy" className="underline">Privacyverklaring</Link> •{' '}
+        <Link href="/terms" className="underline">Gebruiksvoorwaarden</Link>
+      </p>
+    </footer>
+  </html>  
   );
 }

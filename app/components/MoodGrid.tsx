@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 type Track = {
   title: string
@@ -13,54 +13,59 @@ type Recommendation = {
   youtube: string
 }
 
-export default function MoodGrid({ mood }: { mood: string }) {
+export default function MoodGrid({ mood, seed }: { mood: string; seed?: string }) {
   const [tracks, setTracks] = useState<Track[]>([])
   const [recommendations, setRecommendations] = useState<Recommendation[]>([])
-  const [selectedMood, setSelectedMood] = useState('')
-  const [source, setSource] = useState<'spotify-user' | 'spotify-app' | 'youtube' | 'youtube-fallback' | ''>('')
 
-  async function fetchTracks(mood: string) {
-    setSelectedMood(mood)
-    setTracks([])
-    setRecommendations([])
+  useEffect(() => {
+    let cancelled = false
 
-    const res = await fetch(`/api/spotify/recommendations?mood=${mood}`)
+    async function fetchTracks() {
+      if (!mood) {
+        setTracks([])
+        setRecommendations([])
+        return
+      }
 
-    if (!res.ok) {
-      console.error('API error:', await res.text())
-      return
+      setTracks([])
+      setRecommendations([])
+
+      const params = new URLSearchParams({ mood })
+      if (seed) {
+        params.set('seed', seed)
+      }
+
+      const res = await fetch(`/api/spotify/recommendations?${params.toString()}`)
+
+      if (!res.ok) {
+        console.error('API error:', await res.text())
+        return
+      }
+
+      const data = await res.json()
+      if (cancelled) return
+
+      if (data.tracks) {
+        setTracks(data.tracks)
+      }
+
+      if (data.recommendations) {
+        setRecommendations(data.recommendations)
+      }
     }
 
-    const data = await res.json()
+    fetchTracks()
 
-    setSource(data.source)
-
-    if (data.tracks) {
-      setTracks(data.tracks)
+    return () => {
+      cancelled = true
     }
-
-    if (data.recommendations) {
-      setRecommendations(data.recommendations)
-    }
-  }
+  }, [mood, seed])
 
   return (
     <div className="space-y-6">
-      <div className="flex gap-4 flex-wrap">
-        {['vrolijk', 'rustig', 'romantisch', 'energiek', 'verdrietig', 'salsa', 'hardrock'].map((mood) => (
-          <button
-            key={mood}
-            onClick={() => fetchTracks(mood)}
-            className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
-          >
-            {mood}
-          </button>
-        ))}
-      </div>
-
-      {selectedMood && (
+      {mood && (
         <h2 className="text-xl font-semibold">
-          Aanbevolen bij stemming: {selectedMood}
+          Aanbevolen bij stemming: {mood}
         </h2>
       )}
 
@@ -102,7 +107,8 @@ export default function MoodGrid({ mood }: { mood: string }) {
         </div>
       )}
 
-      {/* Geen resultaat */}      {tracks.length === 0 && recommendations.length === 0 && selectedMood && (
+      {/* Geen resultaat */}
+      {tracks.length === 0 && recommendations.length === 0 && mood && (
         <p className="text-zinc-400">Geen muziek gevonden voor deze stemming.</p>
       )}
     </div>

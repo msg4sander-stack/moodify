@@ -15,20 +15,28 @@ const supportedGenres: Record<string, string[]> = {
   gestrest: ['ambient', 'study', 'sleep'],
 }
 
-// Doel-ranges voor Spotify audio features per mood
+// Audio feature targets per mood voor de Spotify recommendations API
 const moodAudioTargets: Record<
   string,
-  { minValence?: number; maxValence?: number; minEnergy?: number; maxEnergy?: number }
+  {
+    targetValence?: number
+    targetEnergy?: number
+    minValence?: number
+    maxValence?: number
+    minEnergy?: number
+    maxEnergy?: number
+    minDanceability?: number
+  }
 > = {
-  blij: { minValence: 0.7, minEnergy: 0.7 },
-  energiek: { minValence: 0.6, minEnergy: 0.8 },
-  relaxed: { minValence: 0.4, maxValence: 0.7, maxEnergy: 0.45 },
-  verdrietig: { maxValence: 0.4, maxEnergy: 0.4 },
-  romantisch: { minValence: 0.5, maxValence: 0.7, minEnergy: 0.4, maxEnergy: 0.7 },
-  boos: { maxValence: 0.5, minEnergy: 0.7 },
-  neutraal: { minValence: 0.45, maxValence: 0.55, minEnergy: 0.45, maxEnergy: 0.55 },
-  dromerig: { minValence: 0.5, maxValence: 0.7, minEnergy: 0.3, maxEnergy: 0.6 },
-  gestrest: { maxValence: 0.6, maxEnergy: 0.35 },
+  blij: { targetValence: 0.9, targetEnergy: 0.8, minDanceability: 0.7 },
+  energiek: { targetValence: 0.75, targetEnergy: 0.9, minDanceability: 0.7 },
+  relaxed: { targetValence: 0.6, targetEnergy: 0.35, minDanceability: 0.3, maxEnergy: 0.45 },
+  verdrietig: { targetValence: 0.2, targetEnergy: 0.2 },
+  romantisch: { targetValence: 0.65, targetEnergy: 0.5, minDanceability: 0.4 },
+  boos: { targetValence: 0.3, targetEnergy: 0.85, minDanceability: 0.5 },
+  neutraal: { targetValence: 0.5, targetEnergy: 0.5 },
+  dromerig: { targetValence: 0.6, targetEnergy: 0.4, minDanceability: 0.35 },
+  gestrest: { targetValence: 0.4, targetEnergy: 0.25, minDanceability: 0.2 },
 }
 
 export async function GET(req: NextRequest) {
@@ -67,11 +75,22 @@ export async function GET(req: NextRequest) {
 
     // Voeg audio feature targets toe op basis van mood
     const targets = moodAudioTargets[mood] || {}
-    const { minValence, maxValence, minEnergy, maxEnergy } = targets
+    const {
+      targetValence,
+      targetEnergy,
+      minValence,
+      maxValence,
+      minEnergy,
+      maxEnergy,
+      minDanceability,
+    } = targets
+    if (typeof targetValence === 'number') params.set('target_valence', String(targetValence))
+    if (typeof targetEnergy === 'number') params.set('target_energy', String(targetEnergy))
     if (typeof minValence === 'number') params.set('min_valence', String(minValence))
     if (typeof maxValence === 'number') params.set('max_valence', String(maxValence))
     if (typeof minEnergy === 'number') params.set('min_energy', String(minEnergy))
     if (typeof maxEnergy === 'number') params.set('max_energy', String(maxEnergy))
+    if (typeof minDanceability === 'number') params.set('min_danceability', String(minDanceability))
 
     const res = await fetch(`https://api.spotify.com/v1/recommendations?${params.toString()}`, {
       headers: {

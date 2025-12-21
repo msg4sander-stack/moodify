@@ -21,6 +21,25 @@ export default function HomePage() {
   const { status } = useSession()
   const [lang, setLang] = useState<keyof typeof translations>('en')
   const [selectedMood, setSelectedMood] = useState('')
+  const [selectedSeed, setSelectedSeed] = useState('')
+
+  const seeds = [
+    'acoustic', 'afrobeat', 'alt-rock', 'ambient', 'black-metal', 'bluegrass', 'blues',
+    'bossa-nova', 'classical', 'club', 'country', 'dance', 'dancehall', 'death-metal',
+    'deep-house', 'disco', 'drum-and-bass', 'dub', 'edm', 'electro', 'electronic', 'emo',
+    'folk', 'forro', 'french', 'funk', 'garage', 'german', 'gospel', 'goth', 'grindcore',
+    'groove', 'grunge', 'guitar', 'hard-rock', 'hardcore', 'hardstyle', 'heavy-metal',
+    'hip-hop', 'honky-tonk', 'house', 'idm', 'indian', 'indie', 'indie-pop', 'industrial',
+    'iranian', 'j-dance', 'j-idol', 'j-pop', 'j-rock', 'jazz', 'k-pop', 'kids', 'latin',
+    'latino', 'malay', 'mandopop', 'metal', 'metalcore', 'minimal-techno', 'movies',
+    'mpb', 'new-age', 'new-release', 'opera', 'pagode', 'party', 'philippines-opm',
+    'piano', 'pop', 'pop-film', 'post-dubstep', 'power-pop', 'progressive-house',
+    'psych-rock', 'punk', 'punk-rock', 'r-n-b', 'rainy-day', 'reggae', 'reggaeton',
+    'road-trip', 'rock', 'rock-n-roll', 'rockabilly', 'romance', 'sad', 'salsa', 'samba',
+    'sertanejo', 'show-tunes', 'singer-songwriter', 'ska', 'sleep', 'songwriter', 'soul',
+    'soundtracks', 'spanish', 'study', 'summer', 'swedish', 'synth-pop', 'tango',
+    'techno', 'trance', 'trip-hop', 'turkish', 'work-out', 'world-music',
+  ]
 
   useEffect(() => {
     const langCode = navigator.language.slice(0, 2)
@@ -99,6 +118,20 @@ export default function HomePage() {
 
         <section className="bg-white/5 border border-white/10 rounded-2xl p-6 shadow-2xl backdrop-blur">
           <div>
+            <label className="block text-sm font-semibold mb-2">Seed genre (optioneel)</label>
+            <select
+              value={selectedSeed}
+              onChange={(e) => setSelectedSeed(e.target.value)}
+              className="w-full p-3 rounded-lg bg-neutral-900 border border-white/10 focus:border-emerald-400 focus:outline-none mb-4"
+            >
+              <option value="">{lang === 'nl' ? 'Kies automatisch op basis van stemming' : 'Auto (based on mood)'}</option>
+              {seeds.map((seed) => (
+                <option key={seed} value={seed}>
+                  {seed}
+                </option>
+              ))}
+            </select>
+
             <label className="block text-sm font-semibold mb-2">{t.mood}</label>
             <select
               value={selectedMood}
@@ -115,7 +148,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {selectedMood && <MoodGrid mood={selectedMood} />}
+        {selectedMood && <MoodGrid mood={selectedMood} seed={selectedSeed || undefined} />}
       </div>
     </main>
   )
