@@ -82,7 +82,7 @@ export async function GET(req: NextRequest) {
   const chosenSeed = allowedSeeds.has(seedParam) ? seedParam : ''
 
   // Always use a valid seed; fallback to pop
-  const seedGenre = chosenSeed || 'pop'
+  let seedGenre = chosenSeed || 'pop'
   const secret = process.env.NEXTAUTH_SECRET
 
   // Try user token first
