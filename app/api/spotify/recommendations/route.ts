@@ -2,36 +2,25 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getToken } from 'next-auth/jwt'
 import { getAppAccessToken } from '@/lib/spotify'
 
-// Mapping van moods naar seed genres (allemaal uit de opgegeven seed-lijst)
-const supportedGenres: Record<string, string[]> = {
-  blij: ['salsa', 'pop', 'dance'],
-  energiek: ['reggaeton', 'edm', 'hip-hop'],
-  relaxed: ['bossa-nova', 'jazz', 'study', 'sleep'],
-  verdrietig: ['acoustic', 'piano', 'sad'],
-  romantisch: ['romance', 'r-n-b', 'soul'],
-  boos: ['metal', 'punk', 'rock'],
-  neutraal: ['indie', 'indie-pop', 'pop'],
-  dromerig: ['ambient', 'new-age', 'post-dubstep'],
-  gestrest: ['ambient', 'study', 'sleep'],
-}
-
-// Toegestane seed genres voor handmatige selectie
+// Toegestane seed genres voor handmatige selectie (officiële Spotify lijst)
 const allowedSeeds = new Set([
-  'acoustic', 'afrobeat', 'alt-rock', 'ambient', 'black-metal', 'bluegrass', 'blues',
-  'bossa-nova', 'classical', 'club', 'country', 'dance', 'dancehall', 'death-metal',
-  'deep-house', 'disco', 'drum-and-bass', 'dub', 'edm', 'electro', 'electronic', 'emo',
-  'folk', 'forro', 'french', 'funk', 'garage', 'german', 'gospel', 'goth', 'grindcore',
-  'groove', 'grunge', 'guitar', 'hard-rock', 'hardcore', 'hardstyle', 'heavy-metal',
-  'hip-hop', 'honky-tonk', 'house', 'idm', 'indian', 'indie', 'indie-pop', 'industrial',
+  'acoustic', 'afrobeat', 'alt-rock', 'alternative', 'ambient', 'anime', 'black-metal',
+  'bluegrass', 'blues', 'bossanova', 'brazil', 'breakbeat', 'british', 'cantopop',
+  'chicago-house', 'children', 'chill', 'classical', 'club', 'comedy', 'country',
+  'dance', 'dancehall', 'death-metal', 'deep-house', 'detroit-techno', 'disco', 'disney',
+  'drum-and-bass', 'dub', 'dubstep', 'edm', 'electro', 'electronic', 'emo', 'folk',
+  'forro', 'french', 'funk', 'garage', 'german', 'gospel', 'goth', 'grindcore', 'groove',
+  'grunge', 'guitar', 'happy', 'hard-rock', 'hardcore', 'hardstyle', 'heavy-metal',
+  'hip-hop', 'holidays', 'honky-tonk', 'house', 'idm', 'indian', 'indie-pop', 'industrial',
   'iranian', 'j-dance', 'j-idol', 'j-pop', 'j-rock', 'jazz', 'k-pop', 'kids', 'latin',
   'latino', 'malay', 'mandopop', 'metal', 'metalcore', 'minimal-techno', 'movies',
-  'mpb', 'new-age', 'new-release', 'opera', 'pagode', 'party', 'philippines-opm',
-  'piano', 'pop', 'pop-film', 'post-dubstep', 'power-pop', 'progressive-house',
-  'psych-rock', 'punk', 'punk-rock', 'r-n-b', 'rainy-day', 'reggae', 'reggaeton',
-  'road-trip', 'rock', 'rock-n-roll', 'rockabilly', 'romance', 'sad', 'salsa', 'samba',
-  'sertanejo', 'show-tunes', 'singer-songwriter', 'ska', 'sleep', 'songwriter', 'soul',
-  'soundtracks', 'spanish', 'study', 'summer', 'swedish', 'synth-pop', 'tango',
-  'techno', 'trance', 'trip-hop', 'turkish', 'work-out', 'world-music',
+  'mpb', 'new-release', 'opera', 'pagode', 'party', 'philippines-opm', 'piano', 'pop',
+  'pop-film', 'post-dubstep', 'power-pop', 'progressive-house', 'psych-rock', 'punk',
+  'punk-rock', 'r-n-b', 'rainy-day', 'reggae', 'reggaeton', 'road-trip', 'rock',
+  'rock-n-roll', 'rockabilly', 'romance', 'sad', 'salsa', 'samba', 'sertanejo',
+  'show-tunes', 'singer-songwriter', 'ska', 'sleep', 'songwriter', 'soul', 'soundtracks',
+  'spanish', 'study', 'summer', 'swedish', 'synth-pop', 'tango', 'techno', 'trance',
+  'trip-hop', 'turkish', 'work-out', 'world-music',
 ])
 
 // Audio feature targets per mood voor de Spotify recommendations API
@@ -92,7 +81,9 @@ export async function GET(req: NextRequest) {
   const seedParam = searchParams.get('seed')?.toLowerCase() || '';
   const chosenSeed = allowedSeeds.has(seedParam) ? seedParam : '';
 
-  const seedGenres = chosenSeed ? [chosenSeed] : supportedGenres[mood];
+  // Gebruik altijd een geldige seed voor Spotify; val terug op pop als er niets is gekozen
+  const seedGenre = chosenSeed || 'pop';
+  const seedGenres = [seedGenre];
   const secret = process.env.NEXTAUTH_SECRET;
 
   // Probeer gebruikers-token via next-auth
