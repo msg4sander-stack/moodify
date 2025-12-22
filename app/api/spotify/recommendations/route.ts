@@ -120,11 +120,21 @@ export async function GET(req: NextRequest) {
     if (typeof maxEnergy === 'number') params.set('max_energy', String(maxEnergy))
     if (typeof minDanceability === 'number') params.set('min_danceability', String(minDanceability))
 
-    const res = await fetch(`https://api.spotify.com/v1/recommendations?${params.toString()}`, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    })
+    const url = `https://api.spotify.com/v1/recommendations?${params.toString()}`
+    const fetchWithToken = (tokenValue: string) =>
+      fetch(url, {
+        headers: {
+          Authorization: `Bearer ${tokenValue}`,
+        },
+      })
+
+    let res = await fetchWithToken(accessToken)
+
+    // Vervallen user-token? Probeer één keer opnieuw met app-token.
+    if (res.status === 401 && token?.accessToken) {
+      const appToken = await getAppAccessToken()
+      res = await fetchWithToken(appToken)
+    }
 
     if (!res.ok) {
       // Log volledige status + body voor betere foutanalyse
