@@ -149,6 +149,19 @@ export default function HomePage() {
         </section>
 
         {selectedMood && <MoodGrid mood={selectedMood} seed={selectedSeed || undefined} />}
+
+        <footer className="flex justify-center">
+          <button
+            onClick={() => {
+              setSelectedMood('')
+              setSelectedSeed('')
+            }}
+            className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/20 text-sm text-white hover:bg-white/15 transition-colors"
+          >
+            <span aria-hidden="true">🔍</span>
+            Terug naar zoeken
+          </button>
+        </footer>
       </div>
     </main>
   )
