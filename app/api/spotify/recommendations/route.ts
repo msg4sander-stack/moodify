@@ -115,18 +115,27 @@ export async function GET(req: NextRequest) {
     if (typeof maxEnergy === 'number') params.set('max_energy', String(maxEnergy))
     if (typeof minDanceability === 'number') params.set('min_danceability', String(minDanceability))
 
-    const url = `https://api.spotify.com/v1/recommendations?${params.toString()}`
-    const fetchWithToken = (tokenValue: string) =>
-      fetch(url, {
+    const fetchWithToken = (tokenValue: string, targetUrl: string) =>
+      fetch(targetUrl, {
         headers: { Authorization: `Bearer ${tokenValue}` },
       })
 
-    let res = await fetchWithToken(accessToken)
+    let url = `https://api.spotify.com/v1/recommendations?${params.toString()}`
+    let res = await fetchWithToken(accessToken, url)
 
     // If user token expired, retry once with app token
     if (res.status === 401 && userAccessToken) {
       accessToken = await getAppAccessToken()
-      res = await fetchWithToken(accessToken)
+      res = await fetchWithToken(accessToken, url)
+    }
+
+    // Invalid seed (e.g. 400/404)? Retry once with safe default "pop"
+    if (res.status !== 200 && seedGenre !== 'pop') {
+      const fallbackParams = new URLSearchParams(params)
+      fallbackParams.set('seed_genres', 'pop')
+      url = `https://api.spotify.com/v1/recommendations?${fallbackParams.toString()}`
+      seedGenre = 'pop'
+      res = await fetchWithToken(accessToken, url)
     }
 
     if (!res.ok) {
