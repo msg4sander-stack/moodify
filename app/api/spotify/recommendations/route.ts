@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getToken } from 'next-auth/jwt'
 import { getAppAccessToken } from '@/lib/spotify'
 
-// Toegestane seed genres voor handmatige selectie (officiële Spotify lijst)
+// Allowed seed genres (Spotify available-genre-seeds)
 const allowedSeeds = new Set([
   'acoustic', 'afrobeat', 'alt-rock', 'alternative', 'ambient', 'anime', 'black-metal',
   'bluegrass', 'blues', 'bossanova', 'brazil', 'breakbeat', 'british', 'cantopop',
@@ -23,7 +23,7 @@ const allowedSeeds = new Set([
   'trip-hop', 'turkish', 'work-out', 'world-music',
 ])
 
-// Audio feature targets per mood voor de Spotify recommendations API
+// Audio feature targets per mood for Spotify recommendations
 const moodAudioTargets: Record<
   string,
   {
@@ -76,32 +76,27 @@ function buildYoutubeFallback(mood: string, seed: string) {
 }
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const mood = searchParams.get('mood')?.toLowerCase() || 'blij';
-  const seedParam = searchParams.get('seed')?.toLowerCase() || '';
-  const chosenSeed = allowedSeeds.has(seedParam) ? seedParam : '';
+  const { searchParams } = new URL(req.url)
+  const mood = searchParams.get('mood')?.toLowerCase() || 'blij'
+  const seedParam = searchParams.get('seed')?.toLowerCase() || ''
+  const chosenSeed = allowedSeeds.has(seedParam) ? seedParam : ''
 
-  // Gebruik altijd een geldige seed voor Spotify; val terug op pop als er niets is gekozen
-  const seedGenre = chosenSeed || 'pop';
-  const seedGenres = [seedGenre];
-  const secret = process.env.NEXTAUTH_SECRET;
+  // Always use a valid seed; fallback to pop
+  const seedGenre = chosenSeed || 'pop'
+  const secret = process.env.NEXTAUTH_SECRET
 
-  // Probeer gebruikers-token via next-auth
-  const token = await getToken({ req, secret });
-
-  const accessToken = token?.accessToken || (await getAppAccessToken());
-
-  if (!seedGenres) {
-    return NextResponse.json(buildYoutubeFallback(mood, chosenSeed));
-  }
+  // Try user token first
+  const token = await getToken({ req, secret })
+  const userAccessToken = typeof token?.accessToken === 'string' ? token.accessToken : undefined
+  let accessToken = userAccessToken ?? (await getAppAccessToken())
 
   try {
     const params = new URLSearchParams({
-      seed_genres: seedGenres.join(','),
+      seed_genres: seedGenre,
       limit: '8',
     })
 
-    // Voeg audio feature targets toe op basis van mood
+    // Add mood-based targets
     const targets = moodAudioTargets[mood] || {}
     const {
       targetValence,
@@ -123,27 +118,24 @@ export async function GET(req: NextRequest) {
     const url = `https://api.spotify.com/v1/recommendations?${params.toString()}`
     const fetchWithToken = (tokenValue: string) =>
       fetch(url, {
-        headers: {
-          Authorization: `Bearer ${tokenValue}`,
-        },
+        headers: { Authorization: `Bearer ${tokenValue}` },
       })
 
     let res = await fetchWithToken(accessToken)
 
-    // Vervallen user-token? Probeer één keer opnieuw met app-token.
-    if (res.status === 401 && token?.accessToken) {
-      const appToken = await getAppAccessToken()
-      res = await fetchWithToken(appToken)
+    // If user token expired, retry once with app token
+    if (res.status === 401 && userAccessToken) {
+      accessToken = await getAppAccessToken()
+      res = await fetchWithToken(accessToken)
     }
 
     if (!res.ok) {
-      // Log volledige status + body voor betere foutanalyse
-      const errorText = await res.text().catch(() => '');
-      console.error('Spotify API response', res.status, res.statusText, errorText);
-      throw new Error(`Spotify API fout: ${res.statusText}`);
+      const errorText = await res.text().catch(() => '')
+      console.error('Spotify API response', res.status, res.statusText, errorText)
+      throw new Error(`Spotify API fout: ${res.statusText}`)
     }
 
-    const data = await res.json();
+    const data = await res.json()
 
     const tracks = data.tracks.map((track: any) => ({
       title: track.name,
@@ -152,16 +144,15 @@ export async function GET(req: NextRequest) {
       album: track.album?.name ?? '',
       image: track.album?.images?.[0]?.url ?? '',
       previewUrl: track.preview_url ?? '',
-    }));
+    }))
 
     return NextResponse.json({
       mood,
-      source: token?.accessToken ? 'spotify-user' : 'spotify-app',
+      source: userAccessToken ? 'spotify-user' : 'spotify-app',
       tracks,
-    });
+    })
   } catch (err) {
-    console.error('Fout bij ophalen Spotify tracks:', err);
-
-    return NextResponse.json(buildYoutubeFallback(mood, chosenSeed));
+    console.error('Fout bij ophalen Spotify tracks:', err)
+    return NextResponse.json(buildYoutubeFallback(mood, chosenSeed))
   }
 }
