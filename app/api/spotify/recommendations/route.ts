@@ -135,7 +135,12 @@ export async function GET(req: NextRequest) {
       },
     })
 
-    if (!res.ok) throw new Error(`Spotify API fout: ${res.statusText}`);
+    if (!res.ok) {
+      // Log volledige status + body voor betere foutanalyse
+      const errorText = await res.text().catch(() => '');
+      console.error('Spotify API response', res.status, res.statusText, errorText);
+      throw new Error(`Spotify API fout: ${res.statusText}`);
+    }
 
     const data = await res.json();
 
