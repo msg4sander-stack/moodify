@@ -146,22 +146,12 @@ export async function GET(req: NextRequest) {
       res = await fetchWithToken(accessToken, url)
     }
 
-    // Still failing? Use a known-good seed track (Spotify docs example)
-    if (!res.ok) {
-      const trackFallback = new URLSearchParams()
-      trackFallback.set('seed_tracks', '4NHQUGzhtTLFvgF5SZesLK')
-      trackFallback.set('limit', '8')
-      currentParams = trackFallback
-      url = buildUrl(currentParams)
-      res = await fetchWithToken(accessToken, url)
-    }
-
-    // Last-resort: strip all targets and market; keep only seeds/limit
+    // Last-resort: strip all targets, force a simple pop genre with US market
     if (!res.ok) {
       const minimal = new URLSearchParams()
-      if (currentParams.get('seed_genres')) minimal.set('seed_genres', currentParams.get('seed_genres') as string)
-      if (currentParams.get('seed_tracks')) minimal.set('seed_tracks', currentParams.get('seed_tracks') as string)
+      minimal.set('seed_genres', 'pop')
       minimal.set('limit', '8')
+      minimal.set('market', 'US')
       currentParams = minimal
       url = buildUrl(currentParams)
       res = await fetchWithToken(accessToken, url)
