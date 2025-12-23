@@ -1,27 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getToken } from 'next-auth/jwt'
+import { headers } from 'next/headers'
 import { getAppAccessToken } from '@/lib/spotify'
-
-// Allowed seed genres (Spotify available-genre-seeds)
-const allowedSeeds = new Set([
-  'acoustic', 'afrobeat', 'alt-rock', 'alternative', 'ambient', 'anime', 'black-metal',
-  'bluegrass', 'blues', 'bossanova', 'brazil', 'breakbeat', 'british', 'cantopop',
-  'chicago-house', 'children', 'chill', 'classical', 'club', 'comedy', 'country',
-  'dance', 'dancehall', 'death-metal', 'deep-house', 'detroit-techno', 'disco', 'disney',
-  'drum-and-bass', 'dub', 'dubstep', 'edm', 'electro', 'electronic', 'emo', 'folk',
-  'forro', 'french', 'funk', 'garage', 'german', 'gospel', 'goth', 'grindcore', 'groove',
-  'grunge', 'guitar', 'happy', 'hard-rock', 'hardcore', 'hardstyle', 'heavy-metal',
-  'hip-hop', 'holidays', 'honky-tonk', 'house', 'idm', 'indian', 'indie-pop', 'industrial',
-  'iranian', 'j-dance', 'j-idol', 'j-pop', 'j-rock', 'jazz', 'k-pop', 'kids', 'latin',
-  'latino', 'malay', 'mandopop', 'metal', 'metalcore', 'minimal-techno', 'movies',
-  'mpb', 'new-release', 'opera', 'pagode', 'party', 'philippines-opm', 'piano', 'pop',
-  'pop-film', 'post-dubstep', 'power-pop', 'progressive-house', 'psych-rock', 'punk',
-  'punk-rock', 'r-n-b', 'rainy-day', 'reggae', 'reggaeton', 'road-trip', 'rock',
-  'rock-n-roll', 'rockabilly', 'romance', 'sad', 'salsa', 'samba', 'sertanejo',
-  'show-tunes', 'singer-songwriter', 'ska', 'sleep', 'songwriter', 'soul', 'soundtracks',
-  'spanish', 'study', 'summer', 'swedish', 'synth-pop', 'tango', 'techno', 'trance',
-  'trip-hop', 'turkish', 'work-out', 'world-music',
-])
+import { allowedSeedSet } from '@/lib/spotifySeeds'
 
 // Audio feature targets per mood for Spotify recommendations
 const moodAudioTargets: Record<
@@ -77,9 +58,17 @@ function buildYoutubeFallback(mood: string, seed: string) {
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
+  const headerLang = headers().get('accept-language')?.split(',')[0] || ''
+  const lang = searchParams.get('lang') || headerLang || 'en'
+
+  // Derive market from lang (e.g. nl -> NL, en-US -> US); default US
+  const market =
+    lang.split('-')[1]?.toUpperCase() ||
+    lang.slice(0, 2).toUpperCase() ||
+    'US'
   const mood = searchParams.get('mood')?.toLowerCase() || 'blij'
   const seedParam = searchParams.get('seed')?.toLowerCase() || ''
-  const chosenSeed = allowedSeeds.has(seedParam) ? seedParam : ''
+  const chosenSeed = allowedSeedSet.has(seedParam) ? seedParam : ''
 
   // Always use a valid seed; fallback to pop
   let seedGenre = chosenSeed || 'pop'
@@ -94,6 +83,7 @@ export async function GET(req: NextRequest) {
     const params = new URLSearchParams({
       seed_genres: seedGenre,
       limit: '8',
+      market,
     })
 
     // Add mood-based targets
@@ -123,14 +113,14 @@ export async function GET(req: NextRequest) {
     let url = `https://api.spotify.com/v1/recommendations?${params.toString()}`
     let res = await fetchWithToken(accessToken, url)
 
-    // If user token expired, retry once with app token
-    if (res.status === 401 && userAccessToken) {
+    // If user token expired or bad, retry once with fresh app token
+    if (!res.ok && userAccessToken) {
       accessToken = await getAppAccessToken()
       res = await fetchWithToken(accessToken, url)
     }
 
     // Invalid seed (e.g. 400/404)? Retry once with safe default "pop"
-    if (res.status !== 200 && seedGenre !== 'pop') {
+    if (!res.ok && seedGenre !== 'pop') {
       const fallbackParams = new URLSearchParams(params)
       fallbackParams.set('seed_genres', 'pop')
       url = `https://api.spotify.com/v1/recommendations?${fallbackParams.toString()}`
@@ -138,10 +128,19 @@ export async function GET(req: NextRequest) {
       res = await fetchWithToken(accessToken, url)
     }
 
+    // Still failing? Use a known-good seed track (Spotify docs example)
+    if (!res.ok) {
+      const trackFallback = new URLSearchParams(params)
+      trackFallback.delete('seed_genres')
+      trackFallback.set('seed_tracks', '4NHQUGzhtTLFvgF5SZesLK')
+      url = `https://api.spotify.com/v1/recommendations?${trackFallback.toString()}`
+      res = await fetchWithToken(accessToken, url)
+    }
+
     if (!res.ok) {
       const errorText = await res.text().catch(() => '')
       console.error('Spotify API response', res.status, res.statusText, errorText)
-      throw new Error(`Spotify API fout: ${res.statusText}`)
+      throw new Error(`Spotify API fout: ${res.status} ${res.statusText}`)
     }
 
     const data = await res.json()

@@ -36,7 +36,12 @@ export default function MoodGrid({ mood, seed }: { mood: string; seed?: string }
       setTracks([])
       setRecommendations([])
 
-      const params = new URLSearchParams({ mood })
+      const lang =
+        typeof navigator !== 'undefined'
+          ? navigator.language || navigator.languages?.[0] || 'en'
+          : 'en'
+
+      const params = new URLSearchParams({ mood, lang })
       if (seed) {
         params.set('seed', seed)
       }
