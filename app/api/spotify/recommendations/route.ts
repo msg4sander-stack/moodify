@@ -179,12 +179,11 @@ export async function GET(req: NextRequest) {
       res = await fetchWithToken(accessToken, url)
     }
 
-    // Last-resort: strip all targets, force a simple pop genre with US market
+    // Last-resort: strip all targets, force a simple pop genre without market
     if (!res.ok) {
       const minimal = new URLSearchParams()
       minimal.set('seed_genres', 'pop')
       minimal.set('limit', '8')
-      minimal.set('market', 'US')
       currentParams = minimal
       url = buildUrl(currentParams)
       res = await fetchWithToken(accessToken, url)
