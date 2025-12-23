@@ -109,7 +109,11 @@ export async function GET(req: NextRequest) {
         headers: { Authorization: `Bearer ${tokenValue}` },
       })
 
-    let url = `https://api.spotify.com/v1/recommendations?${params.toString()}`
+    const buildUrl = (p: URLSearchParams) =>
+      `https://api.spotify.com/v1/recommendations?${p.toString()}`
+
+    let currentParams = params
+    let url = buildUrl(currentParams)
     let res = await fetchWithToken(accessToken, url)
 
     // If user token expired or bad, retry once with fresh app token
@@ -118,21 +122,32 @@ export async function GET(req: NextRequest) {
       res = await fetchWithToken(accessToken, url)
     }
 
+    // Market parameter can cause 404 in some contexts (especially with app tokens). Retry without it.
+    if (!res.ok && currentParams.has('market')) {
+      const noMarket = new URLSearchParams(currentParams)
+      noMarket.delete('market')
+      currentParams = noMarket
+      url = buildUrl(currentParams)
+      res = await fetchWithToken(accessToken, url)
+    }
+
     // Invalid seed (e.g. 400/404)? Retry once with safe default "pop"
     if (!res.ok && seedGenre !== 'pop') {
-      const fallbackParams = new URLSearchParams(params)
+      const fallbackParams = new URLSearchParams(currentParams)
       fallbackParams.set('seed_genres', 'pop')
-      url = `https://api.spotify.com/v1/recommendations?${fallbackParams.toString()}`
+      currentParams = fallbackParams
       seedGenre = 'pop'
+      url = buildUrl(currentParams)
       res = await fetchWithToken(accessToken, url)
     }
 
     // Still failing? Use a known-good seed track (Spotify docs example)
     if (!res.ok) {
-      const trackFallback = new URLSearchParams(params)
+      const trackFallback = new URLSearchParams(currentParams)
       trackFallback.delete('seed_genres')
       trackFallback.set('seed_tracks', '4NHQUGzhtTLFvgF5SZesLK')
-      url = `https://api.spotify.com/v1/recommendations?${trackFallback.toString()}`
+      currentParams = trackFallback
+      url = buildUrl(currentParams)
       res = await fetchWithToken(accessToken, url)
     }
 
