@@ -117,6 +117,14 @@ export async function GET(req: NextRequest) {
       })
     }
 
+    // Quick probe to ensure token is accepted by Spotify before hitting recommendations
+    const probe = await fetchWithToken(accessToken, 'https://api.spotify.com/v1/markets')
+    if (!probe.ok) {
+      const probeBody = await probe.text().catch(() => '')
+      console.error('Spotify token probe failed', probe.status, probe.statusText, probeBody)
+      throw new Error(`Spotify token probe failed: ${probe.status} ${probe.statusText}`)
+    }
+
     const buildUrl = (p: URLSearchParams) =>
       `https://api.spotify.com/v1/recommendations?${p.toString()}`
 

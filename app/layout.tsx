@@ -4,6 +4,7 @@ import "./globals.css";
 import { SessionProviderWrapper } from "./providers/SessionProviderWrapper"; 
 import Link from "next/link";
 import FooterNav from "./components/FooterNav";
+import { InformationCircleIcon } from "@heroicons/react/24/outline";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,6 +36,10 @@ export default function RootLayout({
             <p>
               <Link href="/privacy" className="underline">Privacyverklaring</Link> •{' '}
               <Link href="/terms" className="underline">Gebruiksvoorwaarden</Link>
+            </p>
+            <p className="mt-2 text-xs text-zinc-500 flex items-center justify-center gap-1">
+              <InformationCircleIcon className="h-4 w-4" aria-hidden="true" />
+              <span>Spotify Developer Terms (v10) - korte samenvatting</span>
             </p>
           </footer>
         </SessionProviderWrapper>
