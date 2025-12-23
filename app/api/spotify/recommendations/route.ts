@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getToken } from 'next-auth/jwt'
-import { headers } from 'next/headers'
 import { getAppAccessToken } from '@/lib/spotify'
 import { allowedSeedSet } from '@/lib/spotifySeeds'
 
@@ -58,8 +57,7 @@ function buildYoutubeFallback(mood: string, seed: string) {
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
-  const headerList = await headers()
-  const headerLang = headerList.get('accept-language')?.split(',')[0] || ''
+  const headerLang = req.headers.get('accept-language')?.split(',')[0] || ''
   const lang = searchParams.get('lang') || headerLang || 'en'
 
   // Derive market from lang (e.g. nl -> NL, en-US -> US); default US
