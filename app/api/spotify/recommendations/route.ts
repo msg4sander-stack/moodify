@@ -104,10 +104,15 @@ export async function GET(req: NextRequest) {
     if (typeof maxEnergy === 'number') params.set('max_energy', String(maxEnergy))
     if (typeof minDanceability === 'number') params.set('min_danceability', String(minDanceability))
 
-    const fetchWithToken = (tokenValue: string, targetUrl: string) =>
-      fetch(targetUrl, {
+    const fetchWithToken = (tokenValue: string | undefined, targetUrl: string) => {
+      if (!tokenValue) {
+        throw new Error('Spotify access token ontbreekt (user of app)')
+      }
+      return fetch(targetUrl, {
         headers: { Authorization: `Bearer ${tokenValue}` },
+        cache: 'no-store',
       })
+    }
 
     const buildUrl = (p: URLSearchParams) =>
       `https://api.spotify.com/v1/recommendations?${p.toString()}`
@@ -116,8 +121,8 @@ export async function GET(req: NextRequest) {
     let url = buildUrl(currentParams)
     let res = await fetchWithToken(accessToken, url)
 
-    // If user token expired or bad, retry once with fresh app token
-    if (!res.ok && userAccessToken) {
+    // If token expired or bad, retry once with fresh app token (regardless of user/app origin)
+    if (res.status === 401) {
       accessToken = await getAppAccessToken()
       res = await fetchWithToken(accessToken, url)
     }
