@@ -59,12 +59,6 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const headerLang = req.headers.get('accept-language')?.split(',')[0] || ''
   const lang = searchParams.get('lang') || headerLang || 'en'
-
-  // Derive market from lang (e.g. nl -> NL, en-US -> US); default US
-  const market =
-    lang.split('-')[1]?.toUpperCase() ||
-    lang.slice(0, 2).toUpperCase() ||
-    'US'
   const mood = searchParams.get('mood')?.toLowerCase() || 'blij'
   const seedParam = searchParams.get('seed')?.toLowerCase() || ''
   const chosenSeed = isAllowedSeed(seedParam) ? seedParam : ''
