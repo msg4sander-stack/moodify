@@ -143,17 +143,28 @@ export async function GET(req: NextRequest) {
 
     // Still failing? Use a known-good seed track (Spotify docs example)
     if (!res.ok) {
-      const trackFallback = new URLSearchParams(currentParams)
-      trackFallback.delete('seed_genres')
+      const trackFallback = new URLSearchParams()
       trackFallback.set('seed_tracks', '4NHQUGzhtTLFvgF5SZesLK')
+      trackFallback.set('limit', '8')
       currentParams = trackFallback
+      url = buildUrl(currentParams)
+      res = await fetchWithToken(accessToken, url)
+    }
+
+    // Last-resort: strip all targets and market; keep only seeds/limit
+    if (!res.ok) {
+      const minimal = new URLSearchParams()
+      if (currentParams.get('seed_genres')) minimal.set('seed_genres', currentParams.get('seed_genres') as string)
+      if (currentParams.get('seed_tracks')) minimal.set('seed_tracks', currentParams.get('seed_tracks') as string)
+      minimal.set('limit', '8')
+      currentParams = minimal
       url = buildUrl(currentParams)
       res = await fetchWithToken(accessToken, url)
     }
 
     if (!res.ok) {
       const errorText = await res.text().catch(() => '')
-      console.error('Spotify API response', res.status, res.statusText, errorText)
+      console.error('Spotify API response', res.status, res.statusText, 'URL:', url, 'Params:', currentParams.toString(), 'Body:', errorText)
       throw new Error(`Spotify API fout: ${res.status} ${res.statusText}`)
     }
 
