@@ -124,4 +124,10 @@ export const allowedSeedGenres = [
   'world-music',
 ] as const;
 
-export const allowedSeedSet = new Set(allowedSeedGenres);
+export type AllowedSeed = (typeof allowedSeedGenres)[number];
+
+export const allowedSeedSet = new Set<AllowedSeed>(allowedSeedGenres);
+
+export function isAllowedSeed(seed: string): seed is AllowedSeed {
+  return allowedSeedSet.has(seed as AllowedSeed);
+}

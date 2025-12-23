@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getToken } from 'next-auth/jwt'
 import { getAppAccessToken } from '@/lib/spotify'
-import { allowedSeedSet } from '@/lib/spotifySeeds'
+import { isAllowedSeed } from '@/lib/spotifySeeds'
 
 // Audio feature targets per mood for Spotify recommendations
 const moodAudioTargets: Record<
@@ -67,7 +67,7 @@ export async function GET(req: NextRequest) {
     'US'
   const mood = searchParams.get('mood')?.toLowerCase() || 'blij'
   const seedParam = searchParams.get('seed')?.toLowerCase() || ''
-  const chosenSeed = allowedSeedSet.has(seedParam) ? seedParam : ''
+  const chosenSeed = isAllowedSeed(seedParam) ? seedParam : ''
 
   // Always use a valid seed; fallback to pop
   let seedGenre = chosenSeed || 'pop'
