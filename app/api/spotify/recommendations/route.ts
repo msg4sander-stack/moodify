@@ -135,6 +135,23 @@ export async function GET(req: NextRequest) {
     // If token expired or bad, retry once with fresh app token (regardless of user/app origin)
     if (res.status === 401) {
       accessToken = await getAppAccessToken()
+      // strip market when switching to app token
+      if (currentParams.has('market')) {
+        const noMarket = new URLSearchParams(currentParams)
+        noMarket.delete('market')
+        currentParams = noMarket
+        url = buildUrl(currentParams)
+      }
+      res = await fetchWithToken(accessToken, url)
+    }
+
+    // If still not OK and we were using a user token, retry with app token without market
+    if (!res.ok && userAccessToken) {
+      accessToken = await getAppAccessToken()
+      const noMarket = new URLSearchParams(currentParams)
+      noMarket.delete('market')
+      currentParams = noMarket
+      url = buildUrl(currentParams)
       res = await fetchWithToken(accessToken, url)
     }
 
