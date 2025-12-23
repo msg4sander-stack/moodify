@@ -67,7 +67,7 @@ export async function GET(req: NextRequest) {
   let seedGenre = chosenSeed || 'pop'
   const secret = process.env.NEXTAUTH_SECRET
 
-  // Try user token first
+  // Prefer user token if available; otherwise fall back to app token
   const token = await getToken({ req, secret })
   const userAccessToken = typeof token?.accessToken === 'string' ? token.accessToken : undefined
   let accessToken = userAccessToken ?? (await getAppAccessToken())
@@ -79,7 +79,7 @@ export async function GET(req: NextRequest) {
       limit: '8',
     })
 
-    // Only include market when we have a user token; app tokens work better without it
+    // Only add market when using a user token; app tokens work better without it
     if (userAccessToken) {
       const market =
         lang.split('-')[1]?.toUpperCase() ||
@@ -118,7 +118,12 @@ export async function GET(req: NextRequest) {
     }
 
     // Quick probe to ensure token is accepted by Spotify before hitting recommendations
-    const probe = await fetchWithToken(accessToken, 'https://api.spotify.com/v1/markets')
+    let probe = await fetchWithToken(accessToken, 'https://api.spotify.com/v1/markets')
+    if (probe.status === 401) {
+      // refresh app token and retry probe
+      accessToken = await getAppAccessToken()
+      probe = await fetchWithToken(accessToken, 'https://api.spotify.com/v1/markets')
+    }
     if (!probe.ok) {
       const probeBody = await probe.text().catch(() => '')
       console.error('Spotify token probe failed', probe.status, probe.statusText, probeBody)
