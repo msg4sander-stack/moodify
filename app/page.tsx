@@ -66,40 +66,13 @@ export default function HomePage() {
             </div>
             <button
               onClick={() => signIn('spotify')}
-              disabled={connecting || isAuthed}
+              disabled={connecting}
               className="px-4 py-2 rounded-full bg-emerald-500 hover:bg-emerald-400 text-black font-semibold disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
             >
-              {isAuthed ? 'Verbonden' : t.login}
+              Log in met Spotify
             </button>
           </div>
         </header>
-
-        <section className="bg-white/5 border border-white/10 rounded-2xl p-4 shadow-xl backdrop-blur">
-          <details className="group cursor-pointer">
-            <summary className="flex items-center justify-between text-sm font-semibold text-white">
-              Spotify Developer Terms (v10) - korte samenvatting
-              <span className="text-xs text-emerald-300 ml-2 group-open:hidden">uitklappen</span>
-              <span className="text-xs text-emerald-300 ml-2 hidden group-open:inline">inklappen</span>
-            </summary>
-            <div className="mt-3 text-sm text-zinc-200 space-y-2 leading-relaxed">
-              <p>Door te verbinden met je Spotify-account ga je akkoord met de Spotify Developer Terms (15 mei 2025).</p>
-              <ul className="list-disc list-inside space-y-1 text-zinc-300">
-                <li>Gebruik is gebonden aan privacyregels en alleen voor jouw sessie.</li>
-                <li>Geen verkoop of delen van jouw data; enkel nodig voor aanbevelingen.</li>
-                <li>Spotify kan toegang beperken of beeindigen bij misbruik.</li>
-                <li>Volledige tekst beschikbaar via Spotify Developer Terms.</li>
-              </ul>
-              <a
-                className="inline-block text-emerald-300 underline"
-                href="https://developer.spotify.com/terms"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Bekijk volledige voorwaarden
-              </a>
-            </div>
-          </details>
-        </section>
 
         <section className="bg-white/5 border border-white/10 rounded-2xl p-6 shadow-2xl backdrop-blur">
           <div>
@@ -135,18 +108,6 @@ export default function HomePage() {
 
         {selectedMood && <MoodGrid mood={selectedMood} seed={selectedSeed || undefined} />}
 
-        <footer className="flex justify-center">
-          <button
-            onClick={() => {
-              setSelectedMood('')
-              setSelectedSeed('')
-            }}
-            className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/20 text-sm text-white hover:bg-white/15 transition-colors"
-          >
-            <span aria-hidden="true">🔍</span>
-            Terug naar zoeken
-          </button>
-        </footer>
       </div>
     </main>
   )

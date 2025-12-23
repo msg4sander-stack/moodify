@@ -39,7 +39,17 @@ export default function RootLayout({
             </p>
             <p className="mt-2 text-xs text-zinc-500 flex items-center justify-center gap-1">
               <InformationCircleIcon className="h-4 w-4" aria-hidden="true" />
-              <span>Spotify Developer Terms (v10) - korte samenvatting</span>
+              <span>
+                Spotify Developer Terms (v10) - korte samenvatting.{' '}
+                <Link
+                  href="https://developer.spotify.com/terms"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="underline text-emerald-300"
+                >
+                  Bekijk volledige voorwaarden
+                </Link>
+              </span>
             </p>
           </footer>
         </SessionProviderWrapper>

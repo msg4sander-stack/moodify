@@ -7,6 +7,7 @@ type Track = {
   title: string
   artist: string
   url: string
+  uri?: string
   album?: string
   image?: string
   previewUrl?: string
@@ -90,7 +91,9 @@ export default function MoodGrid({ mood, seed }: { mood: string; seed?: string }
             const youtubeLink = `https://www.youtube.com/results?search_query=${encodeURIComponent(
               `${track.title} ${track.artist}`
             )}`
-            const primaryHref = isAuthed ? track.url : youtubeLink
+            // Prefer spotify: URI when authed (deeper app open), otherwise use web link or YouTube fallback
+            const spotifyDeepLink = track.uri ? track.uri : track.url
+            const primaryHref = isAuthed ? spotifyDeepLink : youtubeLink
             const primaryLabel = isAuthed ? 'Open in Spotify' : 'Bekijk op YouTube'
 
             return (
