@@ -20,10 +20,9 @@ const handler = NextAuth({
       return token
     },
     async session({ session, token }) {
-      // Voeg accessToken toe aan sessie
-      const accessToken = (session as any)?.accessToken;
-      //session.accessToken = token.accessToken as string
-      return accessToken
+      // Voeg accessToken toe aan sessie object zodat getToken het kan lezen
+      ;(session as any).accessToken = token.accessToken
+      return session
     },
   },
 })
