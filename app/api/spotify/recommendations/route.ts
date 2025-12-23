@@ -58,7 +58,8 @@ function buildYoutubeFallback(mood: string, seed: string) {
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
-  const headerLang = headers().get('accept-language')?.split(',')[0] || ''
+  const headerList = await headers()
+  const headerLang = headerList.get('accept-language')?.split(',')[0] || ''
   const lang = searchParams.get('lang') || headerLang || 'en'
 
   // Derive market from lang (e.g. nl -> NL, en-US -> US); default US
