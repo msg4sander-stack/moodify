@@ -34,6 +34,7 @@ export default function HomePage() {
   const t = translations[lang]
   const connecting = status === 'loading'
   const isAuthed = status === 'authenticated'
+  const statusLabel = connecting ? 'Authenticeren...' : isAuthed ? 'Geauthenticeerd' : 'Niet ingelogd'
 
   return (
     <main className="min-h-screen bg-neutral-950 text-white relative overflow-hidden">
@@ -55,12 +56,13 @@ export default function HomePage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="text-sm text-zinc-300">
-              {connecting
-                ? 'Verbinden met Spotify...'
-                : isAuthed
-                  ? 'Verbonden met Spotify'
-                  : 'Log in om Spotify-tracks te gebruiken'}
+            <div className="text-sm text-zinc-300 flex items-center gap-2">
+              <span
+                className={`inline-flex h-2 w-2 rounded-full ${
+                  connecting ? 'bg-amber-400' : isAuthed ? 'bg-emerald-400' : 'bg-zinc-500'
+                }`}
+              />
+              {statusLabel}
             </div>
             <button
               onClick={() => signIn('spotify')}
