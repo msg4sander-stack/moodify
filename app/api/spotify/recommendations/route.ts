@@ -73,11 +73,20 @@ export async function GET(req: NextRequest) {
   let accessToken = userAccessToken ?? (await getAppAccessToken())
 
   try {
+    // Start with minimal params
     const params = new URLSearchParams({
       seed_genres: seedGenre,
       limit: '8',
-      market,
     })
+
+    // Only include market when we have a user token; app tokens work better without it
+    if (userAccessToken) {
+      const market =
+        lang.split('-')[1]?.toUpperCase() ||
+        lang.slice(0, 2).toUpperCase() ||
+        'US'
+      params.set('market', market)
+    }
 
     // Add mood-based targets
     const targets = moodAudioTargets[mood] || {}
