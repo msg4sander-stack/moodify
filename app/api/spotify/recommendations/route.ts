@@ -67,16 +67,18 @@ export async function GET(req: NextRequest) {
   let seedGenre = chosenSeed || 'pop'
   const secret = process.env.NEXTAUTH_SECRET
 
-  // Prefer user token if available; otherwise fall back to app token
+  // Always use App Token for fetching results (as requested)
+  // Check user session only for logging/status purposes
   const token = await getToken({ req, secret })
   const userAccessToken = typeof token?.accessToken === 'string' ? token.accessToken : undefined
+
   let accessToken: string
 
   try {
-    accessToken = userAccessToken ?? (await getAppAccessToken())
+    accessToken = await getAppAccessToken()
   } catch (error) {
-    console.error('Initial token fetch failed:', error)
-    return NextResponse.json({ error: 'Token retrieval failed' }, { status: 401 })
+    console.error('Initial App Token fetch failed:', error)
+    return NextResponse.json({ error: 'System token failure' }, { status: 401 })
   }
 
   try {
@@ -146,16 +148,13 @@ export async function GET(req: NextRequest) {
     // Quick probe to ensure token is accepted by Spotify before hitting recommendations
     let probe = await fetchWithToken(accessToken, 'https://api.spotify.com/v1/markets')
     if (probe.status === 401) {
-      if (userAccessToken && accessToken === userAccessToken) {
-        return NextResponse.json({ error: 'User token invalid' }, { status: 401 })
-      }
       // refresh app token and retry probe
       accessToken = await getAppAccessToken()
       probe = await fetchWithToken(accessToken, 'https://api.spotify.com/v1/markets')
     }
     if (!probe.ok) {
       const probeBody = await probe.text().catch(() => '')
-      console.error('Spotify token probe failed', probe.status, probe.statusText, probeBody, `Token type: ${userAccessToken ? 'user' : 'app'}`, `Token length: ${accessToken?.length ?? 'N/A'}`)
+      console.error('Spotify token probe failed', probe.status, probe.statusText, probeBody, `Token type: app`, `Token length: ${accessToken?.length ?? 'N/A'}`)
       throw new Error(`Spotify token probe failed: ${probe.status} ${probe.statusText}`)
     }
 
@@ -168,9 +167,6 @@ export async function GET(req: NextRequest) {
 
     // If token expired or bad ...
     if (res.status === 401) {
-      if (userAccessToken && accessToken === userAccessToken) {
-        return NextResponse.json({ error: 'User token expired' }, { status: 401 })
-      }
       accessToken = await getAppAccessToken()
 
       // If failing with specific market, retry with US market (safer fallback)
@@ -222,6 +218,10 @@ export async function GET(req: NextRequest) {
       searchParams.set('limit', '8')
       searchParams.set('market', 'US')
 
+      // Add randomness to prevent static results since we're not using the recs engine
+      const randomOffset = Math.floor(Math.random() * 50)
+      searchParams.set('offset', String(randomOffset))
+
       url = `https://api.spotify.com/v1/search?${searchParams.toString()}`
       res = await fetchWithToken(accessToken, url)
     }
@@ -248,7 +248,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       mood,
-      source: userAccessToken ? 'spotify-user' : 'spotify-app',
+      source: 'spotify-app', // Always using app token now
       tracks,
     })
   } catch (err) {

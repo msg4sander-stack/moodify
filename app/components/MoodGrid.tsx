@@ -95,8 +95,8 @@ export default function MoodGrid({ mood, seed }: { mood: string; seed?: string }
             const youtubeLink = `https://www.youtube.com/results?search_query=${encodeURIComponent(
               `${track.title} ${track.artist}`
             )}`
-            // Prefer spotify: URI when authed (deeper app open), otherwise use web link or YouTube fallback
-            const spotifyDeepLink = track.uri ? track.uri : track.url
+            // Use Web URL (https) which is safer than URI (spotify:) - it opens the app if installed or web player otherwise
+            const spotifyDeepLink = track.url
             const primaryHref = isAuthed ? spotifyDeepLink : youtubeLink
             const primaryLabel = isAuthed ? 'Open in Spotify' : 'Bekijk op YouTube'
 
