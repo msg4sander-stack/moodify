@@ -5,7 +5,7 @@ import { signIn, signOut, useSession } from 'next-auth/react'
 import MoodGrid from '@/app/components/MoodGrid'
 import { translations } from '@/lib/translations'
 import { allowedSeedGenres } from '@/lib/spotifySeeds'
-import { countries, getFlagEmoji } from '@/lib/countries'
+import { countries } from '@/lib/countries'
 
 const moods = [
   { value: 'blij', label: '\u{1F604} Blij' },
@@ -115,15 +115,23 @@ export default function HomePage() {
               <div className="flex-1 mb-4 md:mb-0">
                 <label className="block text-sm font-semibold mb-2">Regio / Land</label>
                 <div className="relative" ref={dropdownRef}>
+                  {selectedMarket && (
+                    <img
+                      src={`https://flagcdn.com/w40/${selectedMarket.toLowerCase()}.png`}
+                      alt={selectedMarket}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 w-6 rounded shadow-sm z-10"
+                    />
+                  )}
                   <input
                     type="text"
-                    className="w-full p-3 rounded-lg bg-neutral-900 border border-white/10 focus:border-emerald-400 focus:outline-none"
+                    className={`w-full p-3 rounded-lg bg-neutral-900 border border-white/10 focus:border-emerald-400 focus:outline-none ${selectedMarket ? 'pl-12' : ''
+                      }`}
                     placeholder={lang === 'nl' ? 'Zoek land...' : 'Search country...'}
                     value={
                       isMarketOpen
                         ? marketSearch
                         : selectedMarket && countries[selectedMarket]
-                          ? `${getFlagEmoji(selectedMarket)} ${countries[selectedMarket]}`
+                          ? countries[selectedMarket]
                           : ''
                     }
                     onFocus={() => {
@@ -148,7 +156,11 @@ export default function HomePage() {
                               setIsMarketOpen(false)
                             }}
                           >
-                            <span className="text-xl">{getFlagEmoji(code)}</span>
+                            <img
+                              src={`https://flagcdn.com/w40/${code.toLowerCase()}.png`}
+                              alt={name}
+                              className="w-6 h-auto rounded shadow-sm"
+                            />
                             <span>{name}</span>
                           </li>
                         ))
