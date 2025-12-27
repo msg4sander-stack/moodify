@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { signIn, useSession } from 'next-auth/react'
+import { translations } from '@/lib/translations'
 
 type Track = {
   title: string
@@ -18,7 +19,7 @@ type Recommendation = {
   youtube: string
 }
 
-export default function MoodGrid({ mood, seed, market }: { mood: string; seed?: string; market?: string }) {
+export default function MoodGrid({ mood, seed, market, lang = 'en' }: { mood: string; seed?: string; market?: string; lang?: string }) {
   const { status } = useSession()
   const [tracks, setTracks] = useState<Track[]>([])
   const [recommendations, setRecommendations] = useState<Recommendation[]>([])
@@ -44,7 +45,7 @@ export default function MoodGrid({ mood, seed, market }: { mood: string; seed?: 
       }
 
       setLoading(true)
-      const lang =
+      const fetchLang =
         typeof navigator !== 'undefined'
           ? navigator.language || navigator.languages?.[0] || 'en'
           : 'en'
@@ -52,7 +53,7 @@ export default function MoodGrid({ mood, seed, market }: { mood: string; seed?: 
       const offset = (page - 1) * limit
       const params = new URLSearchParams({
         mood,
-        lang,
+        lang: fetchLang,
         offset: offset.toString(),
         limit: limit.toString()
       })
@@ -101,13 +102,17 @@ export default function MoodGrid({ mood, seed, market }: { mood: string; seed?: 
     }
   }, [mood, seed, market, page])
 
+  const t = translations[lang as keyof typeof translations] || translations.en
+
   return (
     <div className="space-y-6">
       {mood && (
         <div className="space-y-1">
-          <h2 className="text-xl font-semibold">Aanbevolen bij stemming: {mood}</h2>
+          <h2 className="text-xl font-semibold">
+            {lang === 'nl' ? 'Aanbevolen bij stemming' : 'Recommended for mood'}: {t.moods?.[mood as keyof typeof t.moods] || mood}
+          </h2>
           <p className="text-sm text-zinc-300">
-            Genre bron: {seed ? `handmatig gekozen (${seed})` : 'op basis van mood-mapping'}
+            {lang === 'nl' ? 'Genre bron' : 'Genre source'}: {seed ? (lang === 'nl' ? `handmatig gekozen (${seed})` : `manually chosen (${seed})`) : (lang === 'nl' ? 'op basis van mood-mapping' : 'based on mood-mapping')}
           </p>
         </div>
       )}
