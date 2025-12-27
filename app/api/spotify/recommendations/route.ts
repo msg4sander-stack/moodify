@@ -126,6 +126,9 @@ export async function GET(req: NextRequest) {
     // Quick probe to ensure token is accepted by Spotify before hitting recommendations
     let probe = await fetchWithToken(accessToken, 'https://api.spotify.com/v1/markets')
     if (probe.status === 401) {
+      if (userAccessToken && accessToken === userAccessToken) {
+        return NextResponse.redirect(new URL('/api/auth/signin/spotify', req.url))
+      }
       // refresh app token and retry probe
       accessToken = await getAppAccessToken()
       probe = await fetchWithToken(accessToken, 'https://api.spotify.com/v1/markets')
@@ -143,9 +146,13 @@ export async function GET(req: NextRequest) {
     let url = buildUrl(currentParams)
     let res = await fetchWithToken(accessToken, url)
 
-    // If token expired or bad, retry once with fresh app token (regardless of user/app origin)
+    // If token expired or bad ...
     if (res.status === 401) {
+      if (userAccessToken && accessToken === userAccessToken) {
+        return NextResponse.redirect(new URL('/api/auth/signin/spotify', req.url))
+      }
       accessToken = await getAppAccessToken()
+
       // strip market when switching to app token
       if (currentParams.has('market')) {
         const noMarket = new URLSearchParams(currentParams)
@@ -220,6 +227,6 @@ export async function GET(req: NextRequest) {
     })
   } catch (err) {
     console.error('Fout bij ophalen Spotify tracks:', err)
-    return NextResponse.json(buildYoutubeFallback(mood, chosenSeed))
+    return NextResponse.redirect(new URL('/api/auth/signin/spotify', req.url))
   }
 }

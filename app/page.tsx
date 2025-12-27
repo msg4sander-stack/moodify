@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { signIn, useSession } from 'next-auth/react'
+import { signIn, signOut, useSession } from 'next-auth/react'
 import MoodGrid from '@/app/components/MoodGrid'
 import { translations } from '@/lib/translations'
 import { allowedSeedGenres } from '@/lib/spotifySeeds'
@@ -34,7 +34,7 @@ export default function HomePage() {
   const t = translations[lang]
   const connecting = status === 'loading'
   const isAuthed = status === 'authenticated'
-  const statusLabel = connecting ? 'Authenticeren...' : isAuthed ? 'Geauthenticeerd' : 'Niet ingelogd'
+  const statusLabel = connecting ? 'Authenticeren...' : isAuthed ? 'Ingelogd' : 'Niet ingelogd'
 
   return (
     <main className="min-h-screen bg-neutral-950 text-white relative overflow-hidden">
@@ -58,18 +58,17 @@ export default function HomePage() {
           <div className="flex items-center gap-3">
             <div className="text-sm text-zinc-300 flex items-center gap-2">
               <span
-                className={`inline-flex h-2 w-2 rounded-full ${
-                  connecting ? 'bg-amber-400' : isAuthed ? 'bg-emerald-400' : 'bg-zinc-500'
-                }`}
+                className={`inline-flex h-2 w-2 rounded-full ${connecting ? 'bg-amber-400' : isAuthed ? 'bg-emerald-400' : 'bg-zinc-500'
+                  }`}
               />
               {statusLabel}
             </div>
             <button
-              onClick={() => signIn('spotify')}
+              onClick={() => (isAuthed ? signOut() : signIn('spotify'))}
               disabled={connecting}
               className="px-4 py-2 rounded-full bg-emerald-500 hover:bg-emerald-400 text-black font-semibold disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
             >
-              Log in met Spotify
+              {isAuthed ? 'Log uit' : 'Log in met Spotify'}
             </button>
           </div>
         </header>
