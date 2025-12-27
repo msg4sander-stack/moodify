@@ -216,7 +216,7 @@ export async function GET(req: NextRequest) {
       const fallbackGenre = chosenSeed || moodGenreMap[mood] || 'pop'
       const keywords = moodSearchKeywords[mood] || mood
 
-      // Use genre + optimized keywords for variety and relevance
+      // Layer 1: Specific & Relevant (Genre + Optimized Keywords)
       searchParams.set('q', `genre:${fallbackGenre} ${keywords}`)
       searchParams.set('type', 'track')
       searchParams.set('limit', limit.toString())
@@ -224,15 +224,27 @@ export async function GET(req: NextRequest) {
       searchParams.set('offset', offset.toString())
 
       url = `https://api.spotify.com/v1/search?${searchParams.toString()}`
-      console.log(`Searching Spotify (Variety Fallback): ${url}`)
+      console.log(`Layer 1 Search (Variety): ${url}`)
       res = await fetchWithToken(accessToken, url)
 
-      // Double-check: if variety search yielded nothing, fall back to pure genre
+      // Layer 2 Fallback: Reliable Genre (Simple genre filter)
       if (res.ok) {
-        const checkData = await res.clone().json().catch(() => ({}))
-        if (!checkData.tracks?.items?.length) {
-          console.log('Variety search empty. Falling back to simple genre search...')
+        const data1 = await res.clone().json().catch(() => ({}))
+        if (!data1.tracks?.items?.length) {
+          console.log('Layer 1 empty. Falling back to Layer 2 (Pure Genre)...')
           searchParams.set('q', `genre:${fallbackGenre}`)
+          url = `https://api.spotify.com/v1/search?${searchParams.toString()}`
+          res = await fetchWithToken(accessToken, url)
+        }
+      }
+
+      // Layer 3 Fallback: Ultra-Broad (Plain text search, no genre filter)
+      if (res.ok) {
+        const data2 = await res.clone().json().catch(() => ({}))
+        if (!data2.tracks?.items?.length) {
+          console.log('Layer 2 empty. Falling back to Layer 3 (Broad Text)...')
+          // Use the mood word itself in the search if keywords were too specific
+          searchParams.set('q', `${fallbackGenre} ${mood}`)
           url = `https://api.spotify.com/v1/search?${searchParams.toString()}`
           res = await fetchWithToken(accessToken, url)
         }
