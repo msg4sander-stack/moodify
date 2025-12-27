@@ -78,6 +78,8 @@ export async function GET(req: NextRequest) {
 
   // Always use a valid seed; fallback to pop
   let seedGenre = chosenSeed || 'pop'
+  const offset = parseInt(searchParams.get('offset') || '0', 10)
+  const limit = parseInt(searchParams.get('limit') || '10', 10)
   const secret = process.env.NEXTAUTH_SECRET
 
   // Always use App Token for fetching results (as requested)
@@ -98,7 +100,7 @@ export async function GET(req: NextRequest) {
     // Start with minimal params
     const params = new URLSearchParams({
       seed_genres: seedGenre,
-      limit: '8',
+      limit: limit.toString(),
     })
 
     // Always add market (required for App Token on servers where IP geolocation fails)
@@ -234,13 +236,12 @@ export async function GET(req: NextRequest) {
 
       searchParams.set('q', `genre:${fallbackGenre}`)
       searchParams.set('type', 'track')
-      searchParams.set('limit', '8')
+      searchParams.set('limit', limit.toString())
       // Use the calculated market (from user's language) to prioritize local content (e.g. NL)
       searchParams.set('market', market)
 
-      // Add randomness to prevent static results since we're not using the recs engine
-      const randomOffset = Math.floor(Math.random() * 50)
-      searchParams.set('offset', String(randomOffset))
+      // Use the provided offset for pagination
+      searchParams.set('offset', offset.toString())
 
       url = `https://api.spotify.com/v1/search?${searchParams.toString()}`
       res = await fetchWithToken(accessToken, url)
@@ -256,6 +257,8 @@ export async function GET(req: NextRequest) {
 
     // Unified response parsing (Search API returns tracks.items, Recommendations API returns tracks)
     const rawTracks = data.tracks?.items || data.tracks || []
+    const total = data.tracks?.total || rawTracks.length
+
     const tracks = rawTracks.map((track: any) => ({
       title: track.name,
       artist: track.artists.map((a: any) => a.name).join(', '),
@@ -270,6 +273,11 @@ export async function GET(req: NextRequest) {
       mood,
       source: 'spotify-app', // Always using app token now
       tracks,
+      pagination: {
+        total,
+        offset,
+        limit,
+      }
     })
   } catch (err) {
     console.error('Fout bij ophalen Spotify tracks:', err)
