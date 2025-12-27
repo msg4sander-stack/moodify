@@ -3,49 +3,35 @@ export const translations = {
     welcome: 'Welcome to Moodify',
     login: 'Log in with Spotify',
     mood: 'Select your mood',
-    moods: {
-      happy: 'Happy',
-      energetic: 'Energetic',
-      relaxed: 'Relaxed',
-      sad: 'Sad',
-      romantic: 'Romantic',
-      angry: 'Angry',
-      neutral: 'Neutral',
-      dreamy: 'Dreamy',
-      stressed: 'Stressed',
-    }
   },
   es: {
     welcome: 'Bienvenido a Moodify',
     login: 'Iniciar sesión con Spotify',
     mood: 'Selecciona tu estado de ánimo',
-    moods: {
-      happy: 'Feliz',
-      energetic: 'Enérgico',
-      relaxed: 'Relajado',
-      sad: 'Triste',
-      romantic: 'Romántico',
-      angry: 'Enojado',
-      neutral: 'Neutral',
-      dreamy: 'Soñador',
-      stressed: 'Estresado',
-    }
+  },
+  zh: {
+    welcome: '欢迎来到 Moodify',
+    login: '使用 Spotify 登录',
+    mood: '选择你的心情',
+  },
+  ar: {
+    welcome: 'مرحبًا بك في موديفاي',
+    login: 'سجّل الدخول باستخدام سبوتيفاي',
+    mood: 'اختر حالتك المزاجية',
+  },
+  hi: {
+    welcome: 'मूडिफ़ाई में आपका स्वागत है',
+    login: 'स्पॉटिफ़ाय से लॉग इन करें',
+    mood: 'अपना मूड चुनें',
+  },
+  pt: {
+    welcome: 'Bem-vindo ao Moodify',
+    login: 'Entrar com Spotify',
+    mood: 'Selecione seu humor',
   },
   nl: {
     welcome: 'Welkom bij Moodify',
     login: 'Log in met Spotify',
     mood: 'Selecteer je stemming',
-    moods: {
-      happy: 'Blij',
-      energetic: 'Energiek',
-      relaxed: 'Relaxed',
-      sad: 'Verdrietig',
-      romantic: 'Romantisch',
-      angry: 'Boos',
-      neutral: 'Neutraal',
-      dreamy: 'Dromerig',
-      stressed: 'Gestrest',
-    }
   },
-  // Adding placeholders for others for now or keep minimal
 } as const

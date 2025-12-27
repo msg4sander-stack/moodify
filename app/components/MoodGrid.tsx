@@ -45,6 +45,11 @@ export default function MoodGrid({ mood, seed, market, lang = 'en' }: { mood: st
       }
 
       setLoading(true)
+      // Clear current results if we're starting a fresh search (page 1)
+      if (page === 1) {
+        setTracks([])
+        setRecommendations([])
+      }
       const fetchLang =
         typeof navigator !== 'undefined'
           ? navigator.language || navigator.languages?.[0] || 'en'

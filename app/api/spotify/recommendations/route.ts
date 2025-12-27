@@ -16,7 +16,6 @@ const moodAudioTargets: Record<string, any> = {
   gestrest: { targetValence: 0.4, targetEnergy: 0.25, minDanceability: 0.2 },
 }
 
-// Fallback mapping: Mood -> Genre (used for Search API when Recommendations API fails)
 const moodGenreMap: Record<string, string> = {
   blij: 'pop',
   energiek: 'dance',
@@ -27,6 +26,19 @@ const moodGenreMap: Record<string, string> = {
   neutraal: 'pop',
   dromerig: 'indie',
   gestrest: 'classical',
+}
+
+// Search keywords in English for better variety/relevance in fallback search
+const moodSearchKeywords: Record<string, string> = {
+  blij: 'happy preppy',
+  energiek: 'party workout',
+  relaxed: 'lofi calm',
+  verdrietig: 'melancholic empathy',
+  romantisch: 'love romantic',
+  boos: 'aggressive heavy',
+  neutraal: 'easy listening focal',
+  dromerig: 'ethereal atmosphere',
+  gestrest: 'peaceful focus',
 }
 
 function buildYoutubeFallback(mood: string, seed: string) {
@@ -134,23 +146,6 @@ export async function GET(req: NextRequest) {
       })
     }
 
-    // DEBUG: Check available seeds and endpoint connectivity
-    console.log('Validating recommendations endpoint...')
-    const seedsRes = await fetchWithToken(accessToken, 'https://api.spotify.com/v1/recommendations/available-genre-seeds')
-    if (!seedsRes.ok) {
-      console.error('Failed to fetch available seeds (Endpoint check)', seedsRes.status, await seedsRes.text())
-    } else {
-      const seedsData = await seedsRes.json().catch(() => ({}))
-      const availableTags = seedsData.genres || []
-      // console.log('Available genres:', availableTags.length) // Too verbose to log all
-      if (!availableTags.includes(seedGenre)) {
-        console.warn(`Requested genre '${seedGenre}' not available. Switching to '${availableTags[0]}'`)
-        seedGenre = availableTags[0] || 'pop'
-        // Update params with new valid seed
-        params.set('seed_genres', seedGenre)
-      }
-    }
-
     // Quick probe to ensure token is accepted by Spotify before hitting recommendations
     let probe = await fetchWithToken(accessToken, 'https://api.spotify.com/v1/markets')
     if (probe.status === 401) {
@@ -218,20 +213,30 @@ export async function GET(req: NextRequest) {
     if (!res.ok) {
       console.log('Recommendations API failed. Fallback to Search API...')
       const searchParams = new URLSearchParams()
-
-      // Select best genre for search: User's chosen seed -> Mapped mood genre -> Default 'pop'
       const fallbackGenre = chosenSeed || moodGenreMap[mood] || 'pop'
+      const keywords = moodSearchKeywords[mood] || mood
 
-      // Use basic, ultra-reliable search query
-      searchParams.set('q', `genre:${fallbackGenre}`)
+      // Use genre + optimized keywords for variety and relevance
+      searchParams.set('q', `genre:${fallbackGenre} ${keywords}`)
       searchParams.set('type', 'track')
       searchParams.set('limit', limit.toString())
       searchParams.set('market', market)
       searchParams.set('offset', offset.toString())
 
       url = `https://api.spotify.com/v1/search?${searchParams.toString()}`
-      console.log(`Searching Spotify (Reliable Fallback): ${url}`)
+      console.log(`Searching Spotify (Variety Fallback): ${url}`)
       res = await fetchWithToken(accessToken, url)
+
+      // Double-check: if variety search yielded nothing, fall back to pure genre
+      if (res.ok) {
+        const checkData = await res.clone().json().catch(() => ({}))
+        if (!checkData.tracks?.items?.length) {
+          console.log('Variety search empty. Falling back to simple genre search...')
+          searchParams.set('q', `genre:${fallbackGenre}`)
+          url = `https://api.spotify.com/v1/search?${searchParams.toString()}`
+          res = await fetchWithToken(accessToken, url)
+        }
+      }
     }
 
     if (!res.ok) {
