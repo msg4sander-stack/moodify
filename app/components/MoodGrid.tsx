@@ -18,7 +18,7 @@ type Recommendation = {
   youtube: string
 }
 
-export default function MoodGrid({ mood, seed }: { mood: string; seed?: string }) {
+export default function MoodGrid({ mood, seed, market }: { mood: string; seed?: string; market?: string }) {
   const { status } = useSession()
   const [tracks, setTracks] = useState<Track[]>([])
   const [recommendations, setRecommendations] = useState<Recommendation[]>([])
@@ -45,6 +45,9 @@ export default function MoodGrid({ mood, seed }: { mood: string; seed?: string }
       const params = new URLSearchParams({ mood, lang })
       if (seed) {
         params.set('seed', seed)
+      }
+      if (market) {
+        params.set('market', market)
       }
 
       const res = await fetch(`/api/spotify/recommendations?${params.toString()}`)
@@ -75,7 +78,7 @@ export default function MoodGrid({ mood, seed }: { mood: string; seed?: string }
     return () => {
       cancelled = true
     }
-  }, [mood, seed])
+  }, [mood, seed, market])
 
   return (
     <div className="space-y-6">

@@ -5,6 +5,7 @@ import { signIn, signOut, useSession } from 'next-auth/react'
 import MoodGrid from '@/app/components/MoodGrid'
 import { translations } from '@/lib/translations'
 import { allowedSeedGenres } from '@/lib/spotifySeeds'
+import { countries } from '@/lib/countries'
 
 const moods = [
   { value: 'blij', label: '\u{1F604} Blij' },
@@ -23,11 +24,26 @@ export default function HomePage() {
   const [lang, setLang] = useState<keyof typeof translations>('en')
   const [selectedMood, setSelectedMood] = useState('')
   const [selectedSeed, setSelectedSeed] = useState('')
+  const [selectedMarket, setSelectedMarket] = useState('')
 
   useEffect(() => {
     const langCode = navigator.language.slice(0, 2)
     if (Object.keys(translations).includes(langCode)) {
       setLang(langCode as keyof typeof translations)
+    }
+
+    // Auto-detect region
+    const countryCode = navigator.language.split('-')[1]?.toUpperCase()
+    if (countryCode && countries[countryCode]) {
+      setSelectedMarket(countryCode)
+    } else {
+      // Fallback to lang code if it maps to a country (e.g. NL, DE, not EN)
+      const langUpper = langCode.toUpperCase()
+      if (countries[langUpper]) {
+        setSelectedMarket(langUpper)
+      } else {
+        setSelectedMarket('US') // Default fallback
+      }
     }
   }, [])
 
@@ -75,19 +91,37 @@ export default function HomePage() {
 
         <section className="bg-white/5 border border-white/10 rounded-2xl p-6 shadow-2xl backdrop-blur">
           <div>
-            <label className="block text-sm font-semibold mb-2">Muziekgenre (optioneel)</label>
-            <select
-              value={selectedSeed}
-              onChange={(e) => setSelectedSeed(e.target.value)}
-              className="w-full p-3 rounded-lg bg-neutral-900 border border-white/10 focus:border-emerald-400 focus:outline-none mb-4"
-            >
-              <option value="">{lang === 'nl' ? 'Kies automatisch op basis van stemming' : 'Auto (based on mood)'}</option>
-              {allowedSeedGenres.map((seed) => (
-                <option key={seed} value={seed}>
-                  {seed}
-                </option>
-              ))}
-            </select>
+            <div className="md:flex md:gap-4 mb-4">
+              <div className="flex-1 mb-4 md:mb-0">
+                <label className="block text-sm font-semibold mb-2">Regio / Land</label>
+                <select
+                  value={selectedMarket}
+                  onChange={(e) => setSelectedMarket(e.target.value)}
+                  className="w-full p-3 rounded-lg bg-neutral-900 border border-white/10 focus:border-emerald-400 focus:outline-none"
+                >
+                  {Object.entries(countries).map(([code, name]) => (
+                    <option key={code} value={code}>
+                      {name} ({code})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex-1">
+                <label className="block text-sm font-semibold mb-2">Muziekgenre (optioneel)</label>
+                <select
+                  value={selectedSeed}
+                  onChange={(e) => setSelectedSeed(e.target.value)}
+                  className="w-full p-3 rounded-lg bg-neutral-900 border border-white/10 focus:border-emerald-400 focus:outline-none"
+                >
+                  <option value="">{lang === 'nl' ? 'Kies automatisch op basis van stemming' : 'Auto (based on mood)'}</option>
+                  {allowedSeedGenres.map((seed) => (
+                    <option key={seed} value={seed}>
+                      {seed}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
 
             <label className="block text-sm font-semibold mb-2">{t.mood}</label>
             <select
@@ -105,7 +139,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {selectedMood && <MoodGrid mood={selectedMood} seed={selectedSeed || undefined} />}
+        {selectedMood && <MoodGrid mood={selectedMood} seed={selectedSeed || undefined} market={selectedMarket} />}
 
       </div>
     </main>

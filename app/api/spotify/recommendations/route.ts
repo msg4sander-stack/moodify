@@ -102,7 +102,9 @@ export async function GET(req: NextRequest) {
     })
 
     // Always add market (required for App Token on servers where IP geolocation fails)
+    // Priority: Explicit market param > Language region > Default US
     let market =
+      searchParams.get('market')?.toUpperCase() ||
       lang.split('-')[1]?.toUpperCase() ||
       lang.slice(0, 2).toUpperCase() ||
       'US'
@@ -233,7 +235,8 @@ export async function GET(req: NextRequest) {
       searchParams.set('q', `genre:${fallbackGenre}`)
       searchParams.set('type', 'track')
       searchParams.set('limit', '8')
-      searchParams.set('market', 'US')
+      // Use the calculated market (from user's language) to prioritize local content (e.g. NL)
+      searchParams.set('market', market)
 
       // Add randomness to prevent static results since we're not using the recs engine
       const randomOffset = Math.floor(Math.random() * 50)
