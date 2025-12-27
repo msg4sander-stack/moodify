@@ -196,21 +196,28 @@ export async function GET(req: NextRequest) {
     }
 
     // Last-resort: strip all targets, force a simple pop genre without market
+    // Last-resort: Try Track ID fallback (sometimes genres are broken for App Tokens)
     if (!res.ok) {
-      const minimal = new URLSearchParams()
-      minimal.set('seed_genres', 'pop')
-      minimal.set('limit', '8')
-      minimal.set('market', 'US') // Explicitly set market for last resort
-      currentParams = minimal
+      console.log('Falling back to seed_tracks...')
+      const trackParams = new URLSearchParams()
+      trackParams.set('seed_tracks', '0eGsygTp906u18L0Oimnim') // 'Someday' - generic valid track ID
+      trackParams.set('limit', '8')
+      trackParams.set('market', 'US')
+
+      currentParams = trackParams
       url = buildUrl(currentParams)
-      console.log('Last resort attempt URL:', url)
       res = await fetchWithToken(accessToken, url)
     }
 
     if (!res.ok) {
       const errorText = await res.text().catch(() => '')
-      console.error('Spotify API response', res.status, res.statusText, 'URL:', url, 'Params:', currentParams.toString(), 'Body:', errorText)
-      throw new Error(`Spotify API fout: ${res.status} ${res.statusText}`)
+      console.error('Spotify API failed final attempt', {
+        status: res.status,
+        url: url,
+        body: errorText,
+        headers: Object.fromEntries(res.headers.entries())
+      })
+      throw new Error(`Spotify API error: ${res.status}`)
     }
 
     const data = await res.json()
