@@ -27,6 +27,19 @@ const moodAudioTargets: Record<
   gestrest: { targetValence: 0.4, targetEnergy: 0.25, minDanceability: 0.2 },
 }
 
+// Fallback mapping: Mood -> Genre (used for Search API when Recommendations API fails)
+const moodGenreMap: Record<string, string> = {
+  blij: 'pop',
+  energiek: 'dance',
+  relaxed: 'chill',
+  verdrietig: 'sad',
+  romantisch: 'romance',
+  boos: 'rock',
+  neutraal: 'pop',
+  dromerig: 'indie',
+  gestrest: 'classical',
+}
+
 function buildYoutubeFallback(mood: string, seed: string) {
   const targets = moodAudioTargets[mood] || {}
   const paramTokens: string[] = []
@@ -213,7 +226,11 @@ export async function GET(req: NextRequest) {
     if (!res.ok) {
       console.log('Recommendations API failed. Fallback to Search API...')
       const searchParams = new URLSearchParams()
-      searchParams.set('q', `genre:${seedGenre}`)
+
+      // Select best genre for search: User's chosen seed -> Mapped mood genre -> Default 'pop'
+      const fallbackGenre = chosenSeed || moodGenreMap[mood] || 'pop'
+
+      searchParams.set('q', `genre:${fallbackGenre}`)
       searchParams.set('type', 'track')
       searchParams.set('limit', '8')
       searchParams.set('market', 'US')
