@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { signIn, signOut, useSession } from 'next-auth/react'
 import MoodGrid from '@/app/components/MoodGrid'
 import { translations } from '@/lib/translations'
 import { allowedSeedGenres } from '@/lib/spotifySeeds'
-import { countries } from '@/lib/countries'
+import { countries, getFlagEmoji } from '@/lib/countries'
 
 const moods = [
   { value: 'blij', label: '\u{1F604} Blij' },
@@ -25,6 +25,26 @@ export default function HomePage() {
   const [selectedMood, setSelectedMood] = useState('')
   const [selectedSeed, setSelectedSeed] = useState('')
   const [selectedMarket, setSelectedMarket] = useState('')
+  const [marketSearch, setMarketSearch] = useState('')
+  const [isMarketOpen, setIsMarketOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsMarketOpen(false)
+        // Reset search if no selection made or just cleanup
+        setMarketSearch('')
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const filteredCountries = Object.entries(countries).filter(([code, name]) =>
+    name.toLowerCase().includes(marketSearch.toLowerCase())
+  )
 
   useEffect(() => {
     const langCode = navigator.language.slice(0, 2)
@@ -94,17 +114,50 @@ export default function HomePage() {
             <div className="md:flex md:gap-4 mb-4">
               <div className="flex-1 mb-4 md:mb-0">
                 <label className="block text-sm font-semibold mb-2">Regio / Land</label>
-                <select
-                  value={selectedMarket}
-                  onChange={(e) => setSelectedMarket(e.target.value)}
-                  className="w-full p-3 rounded-lg bg-neutral-900 border border-white/10 focus:border-emerald-400 focus:outline-none"
-                >
-                  {Object.entries(countries).map(([code, name]) => (
-                    <option key={code} value={code}>
-                      {name} ({code})
-                    </option>
-                  ))}
-                </select>
+                <div className="relative" ref={dropdownRef}>
+                  <input
+                    type="text"
+                    className="w-full p-3 rounded-lg bg-neutral-900 border border-white/10 focus:border-emerald-400 focus:outline-none"
+                    placeholder={lang === 'nl' ? 'Zoek land...' : 'Search country...'}
+                    value={
+                      isMarketOpen
+                        ? marketSearch
+                        : selectedMarket && countries[selectedMarket]
+                          ? `${getFlagEmoji(selectedMarket)} ${countries[selectedMarket]}`
+                          : ''
+                    }
+                    onFocus={() => {
+                      setIsMarketOpen(true)
+                      setMarketSearch('')
+                    }}
+                    onChange={(e) => {
+                      setMarketSearch(e.target.value)
+                      setIsMarketOpen(true)
+                    }}
+                  />
+                  {isMarketOpen && (
+                    <ul className="absolute z-50 w-full mt-2 bg-neutral-900 border border-white/10 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                      {filteredCountries.length > 0 ? (
+                        filteredCountries.slice(0, 50).map(([code, name]) => (
+                          <li
+                            key={code}
+                            className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 cursor-pointer transition-colors"
+                            onClick={() => {
+                              setSelectedMarket(code)
+                              setMarketSearch('')
+                              setIsMarketOpen(false)
+                            }}
+                          >
+                            <span className="text-xl">{getFlagEmoji(code)}</span>
+                            <span>{name}</span>
+                          </li>
+                        ))
+                      ) : (
+                        <li className="px-4 py-3 text-zinc-500 italic">No results found</li>
+                      )}
+                    </ul>
+                  )}
+                </div>
               </div>
               <div className="flex-1">
                 <label className="block text-sm font-semibold mb-2">Muziekgenre (optioneel)</label>
