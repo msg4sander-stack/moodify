@@ -234,7 +234,8 @@ export async function GET(req: NextRequest) {
       // Select best genre for search: User's chosen seed -> Mapped mood genre -> Default 'pop'
       const fallbackGenre = chosenSeed || moodGenreMap[mood] || 'pop'
 
-      searchParams.set('q', `genre:${fallbackGenre}`)
+      // Include mood name for better variety and relevance
+      searchParams.set('q', `genre:"${fallbackGenre}" ${mood}`)
       searchParams.set('type', 'track')
       searchParams.set('limit', limit.toString())
       // Use the calculated market (from user's language) to prioritize local content (e.g. NL)
@@ -244,6 +245,7 @@ export async function GET(req: NextRequest) {
       searchParams.set('offset', offset.toString())
 
       url = `https://api.spotify.com/v1/search?${searchParams.toString()}`
+      console.log(`Searching Spotify: ${url}`)
       res = await fetchWithToken(accessToken, url)
     }
 

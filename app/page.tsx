@@ -78,14 +78,8 @@ export default function HomePage() {
 
       <div className="relative z-10 max-w-6xl mx-auto px-6 py-12 flex flex-col gap-8">
         <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-          <div className="flex items-center gap-5">
-            <div className="w-16 h-16 rounded-2xl overflow-hidden border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.5)] transform hover:scale-110 transition-transform duration-300">
-              <img
-                src="/antigravity/brain/8aa5ee0c-8851-4df1-bbf0-f4993be9c9fb/moodify_logo_new_1766836869482.png"
-                alt="Moodify logo"
-                className="w-full h-full object-cover"
-              />
-            </div>
+          <div className="flex items-center gap-4">
+            <img src="/moodify-logo.svg" alt="Moodify logo" className="w-14 h-14" />
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-emerald-300">Moodify</p>
               <h1 className="text-3xl font-bold leading-tight">{t.welcome}</h1>

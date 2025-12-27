@@ -113,56 +113,67 @@ export default function MoodGrid({ mood, seed, market }: { mood: string; seed?: 
       )}
 
       {/* Spotify tracks */}
-      {tracks.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {tracks.map((track, index) => {
-            const youtubeLink = `https://www.youtube.com/results?search_query=${encodeURIComponent(
-              `${track.title} ${track.artist}`
-            )}`
-            const spotifyDeepLink = track.url
-            const primaryHref = isAuthed ? spotifyDeepLink : youtubeLink
-            const primaryLabel = isAuthed ? 'Open in Spotify' : 'Bekijk op YouTube'
+      <div className={`relative transition-all duration-300 ${loading ? 'opacity-40 grayscale-[0.5] pointer-events-none' : 'opacity-100'}`}>
+        {loading && (
+          <div className="absolute inset-0 z-20 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-2">
+              <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+              <p className="text-xs font-medium text-emerald-400 uppercase tracking-widest">Laden...</p>
+            </div>
+          </div>
+        )}
 
-            return (
-              <div key={index} className="p-4 border border-white/5 rounded-xl bg-neutral-900/50 backdrop-blur text-white flex gap-4 hover:border-emerald-500/30 transition-all">
-                {track.image && (
-                  <img
-                    src={track.image}
-                    alt={track.title}
-                    className="w-20 h-20 rounded-lg object-cover shadow-lg flex-shrink-0"
-                  />
-                )}
-                <div className="flex-1 flex flex-col justify-between py-1">
-                  <div>
-                    <p className="font-semibold text-lg leading-tight line-clamp-1">{track.title}</p>
-                    <p className="text-sm text-zinc-400 mt-1">door {track.artist}</p>
-                  </div>
-                  <div className="flex gap-4 items-baseline mt-2">
-                    <a
-                      href={primaryHref}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-emerald-400 hover:text-emerald-300 text-sm font-medium transition-colors"
-                    >
-                      {primaryLabel}
-                    </a>
-                    {isAuthed && track.previewUrl && (
+        {tracks.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {tracks.map((track, index) => {
+              const youtubeLink = `https://www.youtube.com/results?search_query=${encodeURIComponent(
+                `${track.title} ${track.artist}`
+              )}`
+              const spotifyDeepLink = track.url
+              const primaryHref = isAuthed ? spotifyDeepLink : youtubeLink
+              const primaryLabel = isAuthed ? 'Open in Spotify' : 'Bekijk op YouTube'
+
+              return (
+                <div key={index} className="p-4 border border-white/5 rounded-xl bg-neutral-900/50 backdrop-blur text-white flex gap-4 hover:border-emerald-500/30 transition-all">
+                  {track.image && (
+                    <img
+                      src={track.image}
+                      alt={track.title}
+                      className="w-20 h-20 rounded-lg object-cover shadow-lg flex-shrink-0"
+                    />
+                  )}
+                  <div className="flex-1 flex flex-col justify-between py-1">
+                    <div>
+                      <p className="font-semibold text-lg leading-tight line-clamp-1">{track.title}</p>
+                      <p className="text-sm text-zinc-400 mt-1">door {track.artist}</p>
+                    </div>
+                    <div className="flex gap-4 items-baseline mt-2">
                       <a
-                        href={track.previewUrl}
+                        href={primaryHref}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-zinc-500 hover:text-zinc-300 text-xs transition-colors"
+                        className="text-emerald-400 hover:text-emerald-300 text-sm font-medium transition-colors"
                       >
-                        Preview
+                        {primaryLabel}
                       </a>
-                    )}
+                      {isAuthed && track.previewUrl && (
+                        <a
+                          href={track.previewUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-zinc-500 hover:text-zinc-300 text-xs transition-colors"
+                        >
+                          Preview
+                        </a>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            )
-          })}
-        </div>
-      )}
+              )
+            })}
+          </div>
+        )}
+      </div>
 
       {/* Pagination Controls */}
       {tracks.length > 0 && total > limit && (
