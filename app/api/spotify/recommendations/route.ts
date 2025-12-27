@@ -126,6 +126,23 @@ export async function GET(req: NextRequest) {
       })
     }
 
+    // DEBUG: Check available seeds and endpoint connectivity
+    console.log('Validating recommendations endpoint...')
+    const seedsRes = await fetchWithToken(accessToken, 'https://api.spotify.com/v1/recommendations/available-genre-seeds')
+    if (!seedsRes.ok) {
+      console.error('Failed to fetch available seeds (Endpoint check)', seedsRes.status, await seedsRes.text())
+    } else {
+      const seedsData = await seedsRes.json().catch(() => ({}))
+      const availableTags = seedsData.genres || []
+      // console.log('Available genres:', availableTags.length) // Too verbose to log all
+      if (!availableTags.includes(seedGenre)) {
+        console.warn(`Requested genre '${seedGenre}' not available. Switching to '${availableTags[0]}'`)
+        seedGenre = availableTags[0] || 'pop'
+        // Update params with new valid seed
+        params.set('seed_genres', seedGenre)
+      }
+    }
+
     // Quick probe to ensure token is accepted by Spotify before hitting recommendations
     let probe = await fetchWithToken(accessToken, 'https://api.spotify.com/v1/markets')
     if (probe.status === 401) {
