@@ -213,33 +213,30 @@ export async function GET(req: NextRequest) {
     }
 
     // Last-resort: strip all targets, force a simple pop genre without market
-    // Last-resort: Try Track ID fallback (sometimes genres are broken for App Tokens)
+    // Last-resort: Try Search API if Recommendations API is dead (404)
     if (!res.ok) {
-      console.log('Falling back to seed_tracks...')
-      const trackParams = new URLSearchParams()
-      trackParams.set('seed_tracks', '0eGsygTp906u18L0Oimnim') // 'Someday' - generic valid track ID
-      trackParams.set('limit', '8')
-      trackParams.set('market', 'US')
+      console.log('Recommendations API failed. Fallback to Search API...')
+      const searchParams = new URLSearchParams()
+      searchParams.set('q', `genre:${seedGenre}`)
+      searchParams.set('type', 'track')
+      searchParams.set('limit', '8')
+      searchParams.set('market', 'US')
 
-      currentParams = trackParams
-      url = buildUrl(currentParams)
+      url = `https://api.spotify.com/v1/search?${searchParams.toString()}`
       res = await fetchWithToken(accessToken, url)
     }
 
     if (!res.ok) {
-      const errorText = await res.text().catch(() => '')
-      console.error('Spotify API failed final attempt', {
-        status: res.status,
-        url: url,
-        body: errorText,
-        headers: Object.fromEntries(res.headers.entries())
-      })
-      throw new Error(`Spotify API error: ${res.status}`)
+      // If even Search fails, just return empty to avoid 500 crash
+      console.error('All Spotify fallbacks failed', res.status)
+      return NextResponse.json(buildYoutubeFallback(mood, chosenSeed))
     }
 
     const data = await res.json()
 
-    const tracks = data.tracks.map((track: any) => ({
+    // Unified response parsing (Search API returns tracks.items, Recommendations API returns tracks)
+    const rawTracks = data.tracks?.items || data.tracks || []
+    const tracks = rawTracks.map((track: any) => ({
       title: track.name,
       artist: track.artists.map((a: any) => a.name).join(', '),
       url: track.external_urls.spotify,
