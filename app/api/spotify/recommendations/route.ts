@@ -86,14 +86,16 @@ export async function GET(req: NextRequest) {
       limit: '8',
     })
 
-    // Only add market when using a user token; app tokens work better without it
-    if (userAccessToken) {
-      const market =
-        lang.split('-')[1]?.toUpperCase() ||
-        lang.slice(0, 2).toUpperCase() ||
-        'US'
-      params.set('market', market)
-    }
+    // Always add market (required for App Token on servers where IP geolocation fails)
+    let market =
+      lang.split('-')[1]?.toUpperCase() ||
+      lang.slice(0, 2).toUpperCase() ||
+      'US'
+
+    // Fix common mapping errors (EN is not a country)
+    if (market === 'EN') market = 'US'
+
+    params.set('market', market)
 
     // Add mood-based targets
     const targets = moodAudioTargets[mood] || {}
@@ -154,11 +156,11 @@ export async function GET(req: NextRequest) {
       }
       accessToken = await getAppAccessToken()
 
-      // strip market when switching to app token
-      if (currentParams.has('market')) {
-        const noMarket = new URLSearchParams(currentParams)
-        noMarket.delete('market')
-        currentParams = noMarket
+      // If failing with specific market, retry with US market (safer fallback)
+      if (currentParams.has('market') && currentParams.get('market') !== 'US') {
+        const safeMarket = new URLSearchParams(currentParams)
+        safeMarket.set('market', 'US')
+        currentParams = safeMarket
         url = buildUrl(currentParams)
       }
       res = await fetchWithToken(accessToken, url)
@@ -174,11 +176,11 @@ export async function GET(req: NextRequest) {
       res = await fetchWithToken(accessToken, url)
     }
 
-    // Market parameter can cause 404 in some contexts (especially with app tokens). Retry without it.
-    if (!res.ok && currentParams.has('market')) {
-      const noMarket = new URLSearchParams(currentParams)
-      noMarket.delete('market')
-      currentParams = noMarket
+    // If still failing, force market=US
+    if (!res.ok && currentParams.get('market') !== 'US') {
+      const safeMarket = new URLSearchParams(currentParams)
+      safeMarket.set('market', 'US')
+      currentParams = safeMarket
       url = buildUrl(currentParams)
       res = await fetchWithToken(accessToken, url)
     }
@@ -198,6 +200,7 @@ export async function GET(req: NextRequest) {
       const minimal = new URLSearchParams()
       minimal.set('seed_genres', 'pop')
       minimal.set('limit', '8')
+      minimal.set('market', 'US') // Explicitly set market for last resort
       currentParams = minimal
       url = buildUrl(currentParams)
       console.log('Last resort attempt URL:', url)
