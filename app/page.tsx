@@ -79,7 +79,7 @@ export default function HomePage() {
       <div className="relative z-10 max-w-6xl mx-auto px-6 py-12 flex flex-col gap-8">
         <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <div className="flex items-center gap-4">
-            <img src="/moodify-logo.svg" alt="Moodify logo" className="w-14 h-14" />
+            <img src="/assets/logo/logo-128.png" alt="Moodify logo" className="w-16 h-16 rounded-2xl shadow-[0_0_20px_rgba(236,72,153,0.3)]" />
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-emerald-300">Moodify</p>
               <h1 className="text-3xl font-bold leading-tight">{t.welcome}</h1>
