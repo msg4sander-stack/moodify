@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useSession } from 'next-auth/react'
+import { signIn, useSession } from 'next-auth/react'
 
 type Track = {
   title: string
@@ -50,6 +50,10 @@ export default function MoodGrid({ mood, seed }: { mood: string; seed?: string }
       const res = await fetch(`/api/spotify/recommendations?${params.toString()}`)
 
       if (!res.ok) {
+        if (res.status === 401) {
+          signIn('spotify')
+          return
+        }
         console.error('API error:', await res.text())
         return
       }

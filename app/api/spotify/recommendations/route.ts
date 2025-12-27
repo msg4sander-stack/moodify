@@ -75,7 +75,8 @@ export async function GET(req: NextRequest) {
   try {
     accessToken = userAccessToken ?? (await getAppAccessToken())
   } catch (error) {
-    return NextResponse.redirect(new URL('/api/auth/signin/spotify', req.url))
+    console.error('Initial token fetch failed:', error)
+    return NextResponse.json({ error: 'Token retrieval failed' }, { status: 401 })
   }
 
   try {
@@ -127,7 +128,7 @@ export async function GET(req: NextRequest) {
     let probe = await fetchWithToken(accessToken, 'https://api.spotify.com/v1/markets')
     if (probe.status === 401) {
       if (userAccessToken && accessToken === userAccessToken) {
-        return NextResponse.redirect(new URL('/api/auth/signin/spotify', req.url))
+        return NextResponse.json({ error: 'User token invalid' }, { status: 401 })
       }
       // refresh app token and retry probe
       accessToken = await getAppAccessToken()
@@ -135,7 +136,7 @@ export async function GET(req: NextRequest) {
     }
     if (!probe.ok) {
       const probeBody = await probe.text().catch(() => '')
-      console.error('Spotify token probe failed', probe.status, probe.statusText, probeBody)
+      console.error('Spotify token probe failed', probe.status, probe.statusText, probeBody, `Token type: ${userAccessToken ? 'user' : 'app'}`, `Token length: ${accessToken?.length ?? 'N/A'}`)
       throw new Error(`Spotify token probe failed: ${probe.status} ${probe.statusText}`)
     }
 
@@ -149,7 +150,7 @@ export async function GET(req: NextRequest) {
     // If token expired or bad ...
     if (res.status === 401) {
       if (userAccessToken && accessToken === userAccessToken) {
-        return NextResponse.redirect(new URL('/api/auth/signin/spotify', req.url))
+        return NextResponse.json({ error: 'User token expired' }, { status: 401 })
       }
       accessToken = await getAppAccessToken()
 
@@ -199,6 +200,7 @@ export async function GET(req: NextRequest) {
       minimal.set('limit', '8')
       currentParams = minimal
       url = buildUrl(currentParams)
+      console.log('Last resort attempt URL:', url)
       res = await fetchWithToken(accessToken, url)
     }
 
@@ -227,6 +229,6 @@ export async function GET(req: NextRequest) {
     })
   } catch (err) {
     console.error('Fout bij ophalen Spotify tracks:', err)
-    return NextResponse.redirect(new URL('/api/auth/signin/spotify', req.url))
+    return NextResponse.json({ error: 'Spotify API error', details: String(err) }, { status: 500 })
   }
 }
