@@ -5,28 +5,28 @@ import { isAllowedSeed } from '@/lib/spotifySeeds'
 
 // Audio feature targets per mood for Spotify recommendations
 const moodAudioTargets: Record<string, any> = {
-  happy: { targetValence: 0.8, targetEnergy: 0.7 },
-  energetic: { targetEnergy: 0.9, minTempo: 120 },
-  relaxed: { targetValence: 0.5, targetEnergy: 0.3, maxTempo: 100 },
-  sad: { targetValence: 0.2, targetEnergy: 0.2 },
-  romantic: { targetValence: 0.6, targetEnergy: 0.4 },
-  angry: { targetEnergy: 0.9, targetValence: 0.3, minDanceability: 0.5 },
-  neutral: { targetValence: 0.5, targetEnergy: 0.5 },
-  dreamy: { targetAcousticness: 0.8, targetValence: 0.5 },
-  stressed: { targetEnergy: 0.2, targetValence: 0.5, targetInstrumentalness: 0.7 },
+  blij: { targetValence: 0.9, targetEnergy: 0.8, minDanceability: 0.7 },
+  energiek: { targetValence: 0.75, targetEnergy: 0.9, minDanceability: 0.7 },
+  relaxed: { targetValence: 0.6, targetEnergy: 0.35, maxEnergy: 0.45, minDanceability: 0.3 },
+  verdrietig: { targetValence: 0.2, targetEnergy: 0.2 },
+  romantisch: { targetValence: 0.65, targetEnergy: 0.5, minDanceability: 0.4 },
+  boos: { targetValence: 0.3, targetEnergy: 0.85, minDanceability: 0.5 },
+  neutraal: { targetValence: 0.5, targetEnergy: 0.5 },
+  dromerig: { targetValence: 0.6, targetEnergy: 0.4, minDanceability: 0.35 },
+  gestrest: { targetValence: 0.4, targetEnergy: 0.25, minDanceability: 0.2 },
 }
 
 // Fallback mapping: Mood -> Genre (used for Search API when Recommendations API fails)
 const moodGenreMap: Record<string, string> = {
-  happy: 'pop',
-  energetic: 'dance',
+  blij: 'pop',
+  energiek: 'dance',
   relaxed: 'chill',
-  sad: 'indie',
-  romantic: 'romance',
-  angry: 'metal',
-  neutral: 'pop',
-  dreamy: 'indie',
-  stressed: 'classical',
+  verdrietig: 'sad',
+  romantisch: 'romance',
+  boos: 'rock',
+  neutraal: 'pop',
+  dromerig: 'indie',
+  gestrest: 'classical',
 }
 
 function buildYoutubeFallback(mood: string, seed: string) {
@@ -214,8 +214,6 @@ export async function GET(req: NextRequest) {
       res = await fetchWithToken(accessToken, url)
     }
 
-    // Last-resort: strip all targets, force a simple pop genre without market
-    // Last-resort: Try Search API if Recommendations API is dead (404)
     // Last-resort: Try Search API if Recommendations API is dead (404)
     if (!res.ok) {
       console.log('Recommendations API failed. Fallback to Search API...')
@@ -224,20 +222,15 @@ export async function GET(req: NextRequest) {
       // Select best genre for search: User's chosen seed -> Mapped mood genre -> Default 'pop'
       const fallbackGenre = chosenSeed || moodGenreMap[mood] || 'pop'
 
-      // Use a robust genre-based search query. 
-      // Now that 'mood' is English (e.g. 'romantic'), it's safe to include for variety!
-      searchParams.set('q', `genre:"${fallbackGenre}" ${mood}`)
+      // Use basic, ultra-reliable search query
+      searchParams.set('q', `genre:${fallbackGenre}`)
       searchParams.set('type', 'track')
       searchParams.set('limit', limit.toString())
-      // Use the calculated market (from user's language) to prioritize local content (e.g. NL)
       searchParams.set('market', market)
-
-      // Add a bit of stable randomness to the offset for variety on Page 1
-      const searchOffset = offset + (offset === 0 ? Math.floor(Math.random() * 50) : 0)
-      searchParams.set('offset', searchOffset.toString())
+      searchParams.set('offset', offset.toString())
 
       url = `https://api.spotify.com/v1/search?${searchParams.toString()}`
-      console.log(`Searching Spotify (Safe Fallback with English Mood): ${url}`)
+      console.log(`Searching Spotify (Reliable Fallback): ${url}`)
       res = await fetchWithToken(accessToken, url)
     }
 

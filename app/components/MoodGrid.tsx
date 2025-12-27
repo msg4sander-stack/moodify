@@ -102,14 +102,12 @@ export default function MoodGrid({ mood, seed, market, lang = 'en' }: { mood: st
     }
   }, [mood, seed, market, page])
 
-  const t = translations[lang as keyof typeof translations] || translations.en
-
   return (
     <div className="space-y-6">
       {mood && (
         <div className="space-y-1">
           <h2 className="text-xl font-semibold">
-            {lang === 'nl' ? 'Aanbevolen bij stemming' : 'Recommended for mood'}: {t.moods?.[mood as keyof typeof t.moods] || mood}
+            {lang === 'nl' ? 'Aanbevolen bij stemming' : 'Recommended for mood'}: {mood}
           </h2>
           <p className="text-sm text-zinc-300">
             {lang === 'nl' ? 'Genre bron' : 'Genre source'}: {seed ? (lang === 'nl' ? `handmatig gekozen (${seed})` : `manually chosen (${seed})`) : (lang === 'nl' ? 'op basis van mood-mapping' : 'based on mood-mapping')}

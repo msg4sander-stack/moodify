@@ -8,15 +8,15 @@ import { allowedSeedGenres } from '@/lib/spotifySeeds'
 import { countries } from '@/lib/countries'
 
 const moods = [
-  { value: 'happy', label: '\u{1F604} Blij' },
-  { value: 'energetic', label: '\u{1F4AA} Energiek' },
+  { value: 'blij', label: '\u{1F604} Blij' },
+  { value: 'energiek', label: '\u{1F4AA} Energiek' },
   { value: 'relaxed', label: '\u{1F60C} Relaxed' },
-  { value: 'sad', label: '\u{1F622} Verdrietig' },
-  { value: 'romantic', label: '\u2764\uFE0F Romantisch' },
-  { value: 'angry', label: '\u{1F620} Boos' },
-  { value: 'neutral', label: '\u{1F636} Neutraal' },
-  { value: 'dreamy', label: '\u2728 Dromerig' },
-  { value: 'stressed', label: '\u{1F92F} Gestrest' },
+  { value: 'verdrietig', label: '\u{1F622} Verdrietig' },
+  { value: 'romantisch', label: '\u2764\uFE0F Romantisch' },
+  { value: 'boos', label: '\u{1F620} Boos' },
+  { value: 'neutraal', label: '\u{1F636} Neutraal' },
+  { value: 'dromerig', label: '\u2728 Dromerig' },
+  { value: 'gestrest', label: '\u{1F92F} Gestrest' },
 ]
 
 export default function HomePage() {
