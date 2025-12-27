@@ -70,7 +70,13 @@ export async function GET(req: NextRequest) {
   // Prefer user token if available; otherwise fall back to app token
   const token = await getToken({ req, secret })
   const userAccessToken = typeof token?.accessToken === 'string' ? token.accessToken : undefined
-  let accessToken = userAccessToken ?? (await getAppAccessToken())
+  let accessToken: string
+
+  try {
+    accessToken = userAccessToken ?? (await getAppAccessToken())
+  } catch (error) {
+    return NextResponse.redirect(new URL('/api/auth/signin/spotify', req.url))
+  }
 
   try {
     // Start with minimal params
